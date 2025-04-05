@@ -981,7 +981,7 @@ async def keep_alive():
     while True:
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(f"{BASE_URL}/api/health") as response:
+                async with session.get(f"https://shivfabricator.onrender.com/api/health") as response:
                     print(f"Keep-alive ping: {response.status}")
         except Exception as e:
             print(f"Keep-alive error: {str(e)}")
