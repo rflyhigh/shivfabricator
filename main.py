@@ -165,7 +165,7 @@ class ContactMessageInDB(ContactMessage):
         }
 
 class Feedback(BaseModel):
-    project_id: str
+    project_id: Optional[str] = None  # Make it optional
     company_name: str
     author_name: str
     rating: int = Field(..., ge=1, le=5)
@@ -449,7 +449,7 @@ async def create_feedback(feedback: Feedback):
     
     # Create the feedback
     feedback_dict = feedback.dict()
-    feedback_dict["project_id"] = code_doc["project_id"]
+    feedback_dict["project_id"] = code_doc["project_id"]  # Set the project_id from the code lookup
     result = await db.feedback.insert_one(feedback_dict)
     
     return {"id": str(result.inserted_id)}
