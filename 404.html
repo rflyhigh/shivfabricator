@@ -5,10 +5,1179 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loading... - Shiva Fabrications</title>
     <meta name="description" content="Shiva Fabrications provides expert industrial fabrication services.">
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/404.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Global Styles */
+        :root {
+          --primary-color: #00c6ff;
+          --primary-dark: #0099cc;
+          --primary-light: #33d1ff;
+          --secondary-color: #ff6b6b;
+          --dark-bg: #121212;
+          --darker-bg: #0a0a0a;
+          --card-bg: #1e1e1e;
+          --card-hover: #252525;
+          --border-color: #333;
+          --text-primary: #ffffff;
+          --text-secondary: #b0b0b0;
+          --text-muted: #808080;
+          --success-color: #4caf50;
+          --warning-color: #ff9800;
+          --danger-color: #f44336;
+          --gradient-primary: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+          --gradient-secondary: linear-gradient(135deg, #ff6b6b 0%, #ff3366 100%);
+          --box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+          --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+          --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+          --border-radius: 8px;
+          --border-radius-lg: 12px;
+          --border-radius-sm: 4px;
+          --header-height: 80px;
+        }
+
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        body {
+          font-family: 'Poppins', 'Segoe UI', Roboto, sans-serif;
+          line-height: 1.6;
+          color: var(--text-primary);
+          background-color: var(--dark-bg);
+          overflow-x: hidden;
+          min-height: 100vh;
+          scroll-behavior: smooth;
+        }
+
+        a {
+          text-decoration: none;
+          color: var(--primary-color);
+          transition: var(--transition);
+        }
+
+        a:hover {
+          color: var(--primary-light);
+        }
+
+        ul {
+          list-style: none;
+        }
+
+        img {
+          max-width: 100%;
+          height: auto;
+          display: block;
+        }
+
+        .container {
+          width: 100%;
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 0 20px;
+        }
+
+        section {
+          padding: 100px 0;
+          position: relative;
+        }
+
+        .btn {
+          display: inline-block;
+          padding: 14px 32px;
+          border-radius: var(--border-radius);
+          font-weight: 600;
+          text-transform: uppercase;
+          font-size: 0.9rem;
+          letter-spacing: 1px;
+          transition: var(--transition);
+          cursor: pointer;
+          border: none;
+          text-align: center;
+          position: relative;
+          overflow: hidden;
+          z-index: 1;
+        }
+
+        .btn::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: -2;
+        }
+
+        .btn::before {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 0%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.2);
+          transition: all 0.3s;
+          z-index: -1;
+        }
+
+        .btn:hover::before {
+          width: 100%;
+        }
+
+        .btn-primary {
+          background: var(--gradient-primary);
+          color: white;
+          box-shadow: 0 4px 15px rgba(0, 198, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+          box-shadow: 0 8px 25px rgba(0, 198, 255, 0.5);
+          transform: translateY(-2px);
+          color: white;
+        }
+
+        .btn-secondary {
+          background: var(--gradient-secondary);
+          color: white;
+          box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-secondary:hover {
+          box-shadow: 0 8px 25px rgba(255, 107, 107, 0.5);
+          transform: translateY(-2px);
+          color: white;
+        }
+
+        /* Header Styles */
+        header {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          z-index: 1000;
+          background-color: rgba(18, 18, 18, 0.95);
+          backdrop-filter: blur(10px);
+          box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+          transition: var(--transition);
+          height: var(--header-height);
+        }
+
+        header.scrolled {
+          background-color: rgba(10, 10, 10, 0.98);
+          height: 70px;
+        }
+
+        header .container {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          height: 100%;
+        }
+
+        .logo img {
+          max-height: 50px;
+          transition: var(--transition);
+        }
+
+        header.scrolled .logo img {
+          max-height: 40px;
+        }
+
+        .nav-links {
+          display: flex;
+          align-items: center;
+        }
+
+        .nav-links li {
+          margin-left: 35px;
+          position: relative;
+        }
+
+        .nav-links a {
+          color: var(--text-secondary);
+          font-weight: 500;
+          font-size: 1rem;
+          position: relative;
+          padding: 8px 0;
+          transition: var(--transition);
+        }
+
+        .nav-links a::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 0;
+          height: 2px;
+          background: var(--gradient-primary);
+          transition: var(--transition);
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+          color: var(--text-primary);
+        }
+
+        .nav-links a:hover::after,
+        .nav-links a.active::after {
+          width: 100%;
+        }
+
+        .hamburger {
+          display: none;
+          cursor: pointer;
+          z-index: 1010;
+        }
+
+        .hamburger .line {
+          width: 30px;
+          height: 2px;
+          background-color: var(--text-primary);
+          margin: 6px;
+          transition: var(--transition);
+        }
+
+        /* Footer */
+        footer {
+          background-color: var(--darker-bg);
+          color: var(--text-primary);
+          padding: 80px 0 0;
+          position: relative;
+          overflow: hidden;
+        }
+
+        footer::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 5px;
+          background: var(--gradient-primary);
+        }
+
+        .footer-content {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 50px;
+          margin-bottom: 50px;
+          position: relative;
+          z-index: 1;
+        }
+
+        .footer-logo img {
+          max-height: 60px;
+          margin-bottom: 25px;
+        }
+
+        .footer-logo p {
+          color: var(--text-secondary);
+          line-height: 1.8;
+        }
+
+        .footer-links h3,
+        .footer-services h3,
+        .footer-contact h3 {
+          font-size: 1.3rem;
+          margin-bottom: 25px;
+          position: relative;
+          padding-bottom: 15px;
+          color: var(--text-primary);
+        }
+
+        .footer-links h3::after,
+        .footer-services h3::after,
+        .footer-contact h3::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 40px;
+          height: 3px;
+          background: var(--primary-color);
+        }
+
+        .footer-links ul li,
+        .footer-services ul li {
+          margin-bottom: 15px;
+        }
+
+        .footer-links ul li a,
+        .footer-services ul li {
+          color: var(--text-secondary);
+          transition: var(--transition);
+          position: relative;
+          padding-left: 0;
+          display: inline-block;
+        }
+
+        .footer-links ul li a::before {
+          content: '\f054';
+          font-family: 'Font Awesome 5 Free';
+          font-weight: 900;
+          position: absolute;
+          left: -15px;
+          top: 2px;
+          font-size: 0.7rem;
+          color: var(--primary-color);
+          opacity: 0;
+          transition: var(--transition);
+        }
+
+        .footer-links ul li a:hover {
+          color: var(--text-primary);
+          padding-left: 20px;
+        }
+
+        .footer-links ul li a:hover::before {
+          opacity: 1;
+          left: 0;
+        }
+
+        .footer-contact p {
+          color: var(--text-secondary);
+          margin-bottom: 20px;
+          display: flex;
+          align-items: flex-start;
+        }
+
+        .footer-contact p i {
+          margin-right: 15px;
+          color: var(--primary-color);
+          font-size: 1.2rem;
+          margin-top: 5px;
+        }
+
+        .social-icons {
+          display: flex;
+          gap: 15px;
+          margin-top: 25px;
+        }
+
+        .social-icons a {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: var(--card-bg);
+          color: var(--text-secondary);
+          transition: var(--transition);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .social-icons a:hover {
+          transform: translateY(-5px);
+          color: white;
+          border-color: var(--primary-color);
+          background: var(--primary-color);
+        }
+
+        .footer-bottom {
+          text-align: center;
+          padding: 25px 0;
+          border-top: 1px solid rgba(255, 255, 255, 0.05);
+          position: relative;
+          z-index: 1;
+        }
+
+        .footer-bottom p {
+          color: var(--text-secondary);
+        }
+
+        /* Scroll to top button */
+        .scroll-to-top {
+          position: fixed;
+          bottom: 30px;
+          right: 30px;
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          background: var(--gradient-primary);
+          color: white;
+          border: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.2rem;
+          opacity: 0;
+          visibility: hidden;
+          transition: all 0.3s ease;
+          z-index: 999;
+          box-shadow: 0 5px 15px rgba(0, 198, 255, 0.4);
+        }
+
+        .scroll-to-top.show {
+          opacity: 1;
+          visibility: visible;
+        }
+
+        .scroll-to-top:hover {
+          transform: translateY(-5px);
+        }
+
+        /* Loading Animation */
+        .loader {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: var(--darker-bg);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 9999;
+          transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .loader.hidden {
+          opacity: 0;
+          visibility: hidden;
+        }
+
+        .loader-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .loader-spinner {
+          width: 50px;
+          height: 50px;
+          border: 3px solid transparent;
+          border-top-color: var(--primary-color);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        .loader-logo {
+          margin-bottom: 20px;
+          max-width: 100px;
+        }
+
+        .loader-text {
+          margin-top: 20px;
+          color: var(--text-primary);
+          font-size: 1.2rem;
+          letter-spacing: 2px;
+        }
+
+        @keyframes spin {
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
+        }
+
+        /* 404 Page Styles */
+        .error-section {
+            min-height: 60vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 100px 0;
+            text-align: center;
+        }
+
+        .error-content {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius-lg);
+            padding: 60px 40px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .error-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: var(--gradient-primary);
+        }
+
+        .error-content h1 {
+            font-size: 120px;
+            font-weight: 700;
+            margin-bottom: 0;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+
+        .error-content h2 {
+            font-size: 32px;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .error-content p {
+            color: var(--text-secondary);
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+
+        .error-actions {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .page-loading {
+            min-height: 60vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 100px 0;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(0, 198, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .page-loading p {
+            color: var(--text-secondary);
+            font-size: 18px;
+        }
+
+        /* Project Detail Styles */
+        .project-header {
+            background-color: var(--darker-bg);
+            color: var(--text-primary);
+            padding: 150px 0 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0, 198, 255, 0.1) 0%, rgba(255, 107, 107, 0.1) 100%);
+            z-index: 0;
+        }
+
+        .project-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 25px;
+            color: var(--text-primary);
+            position: relative;
+            z-index: 1;
+        }
+
+        .project-meta {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .project-meta span {
+            display: flex;
+            align-items: center;
+            color: var(--text-secondary);
+        }
+
+        .project-meta span i {
+            margin-right: 10px;
+            color: var(--primary-color);
+        }
+
+        .project-details {
+            padding: 80px 0;
+            background-color: var(--dark-bg);
+        }
+
+        .project-details .container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 50px;
+        }
+
+        .project-overview {
+            margin-bottom: 50px;
+        }
+
+        .project-overview h2,
+        .project-scope h2,
+        .project-challenges h2,
+        .project-results h2,
+        .project-feedback h2 {
+            font-size: 1.8rem;
+            color: var(--text-primary);
+            margin-bottom: 25px;
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        .project-overview h2::after,
+        .project-scope h2::after,
+        .project-challenges h2::after,
+        .project-results h2::after,
+        .project-feedback h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: var(--primary-color);
+        }
+
+        .project-overview p,
+        .project-scope p,
+        .project-challenges p,
+        .project-results p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .project-gallery {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .gallery-item {
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            height: 200px;
+            position: relative;
+        }
+
+        .gallery-item::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+            transition: var(--transition);
+            opacity: 0.7;
+        }
+
+        .gallery-item:hover::after {
+            opacity: 0.3;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.1);
+        }
+
+        .project-scope ul,
+        .project-results ul {
+            margin-bottom: 30px;
+        }
+
+        .project-scope ul li,
+        .project-results ul li {
+            margin-bottom: 15px;
+            position: relative;
+            padding-left: 30px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .project-scope ul li::before,
+        .project-results ul li::before {
+            content: '\f00c';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            color: var(--primary-color);
+            position: absolute;
+            left: 0;
+            top: 4px;
+        }
+
+        .challenge-item {
+            margin-bottom: 30px;
+            padding: 25px;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .challenge-item h3 {
+            font-size: 1.3rem;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        .challenge-item p {
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .challenge-item h4 {
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            margin: 20px 0 10px;
+        }
+
+        .sidebar-widget {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--card-shadow);
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-widget h3 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+        }
+
+        .sidebar-widget h3::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: var(--primary-color);
+        }
+
+        .spec-list li {
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+        }
+
+        .spec-list li:last-child {
+            border-bottom: none;
+        }
+
+        .spec-list li strong {
+            color: var(--text-primary);
+            margin-right: 5px;
+        }
+
+        .similar-projects {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .similar-project {
+            display: block;
+            overflow: hidden;
+            border-radius: var(--border-radius);
+            position: relative;
+        }
+
+        .similar-project img {
+            border-radius: var(--border-radius);
+            margin-bottom: 10px;
+            height: 100px;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+
+        .similar-project:hover img {
+            transform: scale(1.1);
+        }
+
+        .similar-project h4 {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .similar-project:hover h4 {
+            color: var(--primary-color);
+        }
+
+        .project-navigation {
+            background-color: var(--darker-bg);
+            padding: 30px 0;
+        }
+
+        .nav-links {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-to-projects {
+            display: flex;
+            align-items: center;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            background-color: var(--card-bg);
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .back-to-projects:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .back-to-projects i {
+            margin-right: 10px;
+        }
+
+        .project-nav {
+            display: flex;
+            gap: 20px;
+        }
+
+        .prev-project,
+        .next-project {
+            display: flex;
+            align-items: center;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            background-color: var(--card-bg);
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .prev-project:hover,
+        .next-project:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .prev-project i {
+            margin-right: 10px;
+        }
+
+        .next-project i {
+            margin-left: 10px;
+        }
+
+        /* Feedback Section */
+        .testimonial-card {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--card-shadow);
+            position: relative;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: var(--transition);
+        }
+
+        .testimonial-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--box-shadow);
+            border-color: rgba(0, 198, 255, 0.2);
+        }
+
+        .quote-icon {
+            font-size: 3rem;
+            color: rgba(0, 198, 255, 0.1);
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+
+        .testimonial-text {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .client-info h4 {
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .client-info p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .rating {
+            display: flex;
+            margin-bottom: 15px;
+        }
+
+        .rating i {
+            color: #ffc107;
+            margin-right: 5px;
+        }
+
+        .no-feedback {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: var(--border-radius-lg);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .no-feedback i {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .no-feedback p {
+            color: var(--text-secondary);
+        }
+
+        /* Feedback Form */
+        .feedback-form-section {
+            padding: 80px 0;
+            background-color: var(--dark-bg);
+        }
+
+        .feedback-form-container {
+            background-color: var(--card-bg);
+            padding: 50px;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--card-shadow);
+            max-width: 800px;
+            margin: 0 auto;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .form-header h2 {
+            font-size: 2rem;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        .form-header p {
+            color: var(--text-secondary);
+        }
+
+        .feedback-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            color: var(--text-primary);
+            background-color: rgba(255, 255, 255, 0.05);
+            transition: var(--transition);
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 198, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.07);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .rating-selector {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .star-rating {
+            display: flex;
+            gap: 5px;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .star-rating i {
+            cursor: pointer;
+            color: #ccc;
+        }
+
+        .star-rating i.fas {
+            color: #ffc107;
+        }
+
+        .rating-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+.form-success {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .success-icon {
+            font-size: 5rem;
+            color: var(--success-color);
+            margin-bottom: 20px;
+        }
+
+        .form-success h2 {
+            font-size: 2rem;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        .form-success p {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 991.98px) {
+            .project-details .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .project-gallery {
+                grid-template-columns: 1fr;
+            }
+
+            .hamburger {
+                display: block;
+            }
+
+            .nav-links {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 300px;
+                height: 100vh;
+                background-color: var(--darker-bg);
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 100px 40px;
+                transition: var(--transition);
+                box-shadow: -5px 0 30px rgba(0, 0, 0, 0.3);
+                z-index: 1000;
+            }
+
+            .nav-links.active {
+                right: 0;
+            }
+
+            .nav-links li {
+                margin: 15px 0;
+                width: 100%;
+            }
+
+            .nav-links a {
+                display: block;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .project-meta {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .error-content {
+                padding: 40px 20px;
+            }
+            
+            .error-content h1 {
+                font-size: 80px;
+            }
+            
+            .error-content h2 {
+                font-size: 24px;
+            }
+            
+            .error-actions {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .error-actions .btn {
+                width: 100%;
+            }
+
+            .feedback-form {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group.full-width {
+                grid-column: span 1;
+            }
+
+            .feedback-form-container {
+                padding: 30px 20px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="loader">
@@ -119,7 +1288,528 @@
         <i class="fas fa-arrow-up"></i>
     </button>
 
-    <script src="/js/script.js"></script>
-    <script src="/js/404.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const API_URL = 'https://shivfabricator.onrender.com/api';
+            const dynamicContent = document.getElementById('dynamic-content');
+            const errorContent = document.getElementById('error-content');
+            
+            // Debug info
+            console.log('404.js loaded', {
+                'Current URL': window.location.href,
+                'Current Path': window.location.pathname,
+                'Search Params': window.location.search
+            });
+            
+            // Function to extract the path from the URL
+            function getPath() {
+                const path = window.location.pathname;
+                console.log('Current path:', path);
+                return path;
+            }
+            
+            // Function to check if the current path is a project page
+            function isProjectPage() {
+                const path = getPath();
+                const isProject = path.startsWith('/projects/') && path.length > 10;
+                console.log('Is project page?', isProject);
+                return isProject;
+            }
+            
+            // Function to get the project slug from the URL
+            function getProjectSlug() {
+                const path = getPath();
+                if (isProjectPage()) {
+                    const slug = path.split('/projects/')[1];
+                    console.log('Project slug:', slug);
+                    return slug;
+                }
+                console.log('Not a project page, no slug');
+                return null;
+            }
+            
+            // Function to check if this is a feedback page
+            function isFeedbackPage() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const isFeedback = window.location.pathname === '/feedback' && urlParams.has('code');
+                console.log('Is feedback page?', isFeedback);
+                return isFeedback;
+            }
+            
+            // Function to get the feedback code from the URL
+            function getFeedbackCode() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const code = urlParams.get('code');
+                console.log('Feedback code:', code);
+                return code;
+            }
+            
+            // Load project details
+            async function loadProject() {
+                const slug = getProjectSlug();
+                if (!slug) {
+                    console.error('No project slug found');
+                    showError();
+                    return;
+                }
+                
+                try {
+                    console.log('Fetching project:', `${API_URL}/projects/${slug}`);
+                    const response = await fetch(`${API_URL}/projects/${slug}`);
+                    console.log('Response status:', response.status);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    
+                    const project = await response.json();
+                    console.log('Project data:', project);
+                    renderProject(project);
+                    
+                    // Update page title and meta
+                    document.title = `${project.title} - Shiva Fabrications`;
+                    
+                    // Load feedback if available
+                    if (project.enable_feedback) {
+                        loadFeedback(project);
+                    }
+                    
+                    // Hide loader
+                    const loader = document.querySelector('.loader');
+                    if (loader) {
+                        loader.classList.add('hidden');
+                        setTimeout(() => loader.remove(), 500);
+                    }
+                } catch (error) {
+                    console.error('Error loading project:', error);
+                    showError();
+                }
+            }
+            
+            // Render project details
+            function renderProject(project) {
+                // Create HTML for the project
+                const projectHtml = `
+                    <section class="project-header">
+                        <div class="container">
+                            <h1>${project.title}</h1>
+                            <div class="project-meta">
+                                <span><i class="fas fa-calendar-alt"></i> Completed: ${project.completed_year}</span>
+                                <span><i class="fas fa-map-marker-alt"></i> Location: ${project.location}</span>
+                                <span><i class="fas fa-tag"></i> Category: ${project.category}</span>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <section class="project-details">
+                        <div class="container">
+                            <div class="project-content">
+                                <div class="project-overview">
+                                    <h2>Project Overview</h2>
+                                    <p>${project.overview}</p>
+                                </div>
+                                
+                                <div class="project-gallery" id="projectGallery">
+                                    ${project.images.map(img => `
+                                        <a href="${img}" class="gallery-item" target="_blank">
+                                            <img src="${img}" alt="${project.title}">
+                                        </a>
+                                    `).join('')}
+                                </div>
+                                
+                                <div class="project-scope">
+                                    <h2>Scope of Work</h2>
+                                    <ul>
+                                        ${project.scope_of_work.map(item => `<li>${item}</li>`).join('')}
+                                    </ul>
+                                </div>
+                                
+                                <div class="project-challenges">
+                                    <h2>Challenges & Solutions</h2>
+                                    ${project.challenges.map(item => `
+                                        <div class="challenge-item">
+                                            <h3>Challenge: ${item.challenge}</h3>
+                                            <p>${item.solution}</p>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                
+                                <div class="project-results">
+                                    <h2>Results & Benefits</h2>
+                                    <ul>
+                                        ${project.results.map(item => `<li>${item}</li>`).join('')}
+                                    </ul>
+                                </div>
+                                
+                                <div class="project-feedback" id="projectFeedback">
+                                    <h2>Client Testimonials</h2>
+                                    <div class="feedback-loading">
+                                        <div class="spinner"></div>
+                                        <p>Loading feedback...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="project-sidebar">
+                                <div class="sidebar-widget">
+                                    <h3>Project Specifications</h3>
+                                    <ul class="spec-list">
+                                        <li><strong>Category:</strong> ${project.category}</li>
+                                        <li><strong>Location:</strong> ${project.location}</li>
+                                        <li><strong>Completed:</strong> ${project.completed_year}</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="sidebar-widget">
+                                    <h3>Need a Similar Solution?</h3>
+                                    <p>Contact us to discuss your project requirements and how we can help you achieve your goals.</p>
+                                    <a href="/contact.html" class="btn btn-primary">Contact Us</a>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <section class="project-navigation">
+                        <div class="container">
+                            <div class="nav-links">
+                                <a href="/projects.html" class="back-to-projects"><i class="fas fa-th-large"></i> Back to All Projects</a>
+                            </div>
+                        </div>
+                    </section>
+                `;
+                
+                // Set the content
+                dynamicContent.innerHTML = projectHtml;
+            }
+            
+            // Load feedback for a project
+            async function loadFeedback(project) {
+                try {
+                    console.log('Fetching feedback:', `${API_URL}/public/feedback/${project.slug}`);
+                    const response = await fetch(`${API_URL}/public/feedback/${project.slug}`);
+                    console.log('Feedback response status:', response.status);
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to load feedback');
+                    }
+                    
+                    const feedback = await response.json();
+                    console.log('Feedback data:', feedback);
+                    const feedbackContainer = document.getElementById('projectFeedback');
+                    
+                    if (feedbackContainer) {
+                        // Remove loading indicator
+                        feedbackContainer.querySelector('.feedback-loading').remove();
+                        
+                        if (feedback.length === 0) {
+                            // No feedback yet
+                            feedbackContainer.innerHTML += `
+                                <div class="no-feedback">
+                                    <i class="fas fa-comments"></i>
+                                    <p>No testimonials available for this project yet.</p>
+                                </div>
+                            `;
+                        } else {
+                            // Render feedback
+                            feedback.forEach(item => {
+                                const testimonialHtml = `
+                                    <div class="testimonial-card">
+                                        <div class="quote-icon">
+                                            <i class="fas fa-quote-left"></i>
+                                        </div>
+                                        <div class="rating">
+                                            ${generateStarRating(item.rating)}
+                                        </div>
+                                        <p class="testimonial-text">${item.text}</p>
+                                        <div class="client-info">
+                                            <h4>${item.author_name}</h4>
+                                            <p>${item.company_name}</p>
+                                        </div>
+                                    </div>
+                                `;
+                                
+                                feedbackContainer.innerHTML += testimonialHtml;
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading feedback:', error);
+                    const feedbackContainer = document.getElementById('projectFeedback');
+                    if (feedbackContainer) {
+                        // Remove loading indicator
+                        feedbackContainer.querySelector('.feedback-loading').remove();
+                        
+                        // Show error message
+                        feedbackContainer.innerHTML += `
+                            <div class="no-feedback">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <p>Unable to load testimonials at this time.</p>
+                            </div>
+                        `;
+                    }
+                }
+            }
+            
+            // Generate star rating HTML
+            function generateStarRating(rating) {
+                let stars = '';
+                for (let i = 1; i <= 5; i++) {
+                    if (i <= rating) {
+                        stars += '<i class="fas fa-star"></i>';
+                    } else {
+                        stars += '<i class="far fa-star"></i>';
+                    }
+                }
+                return stars;
+            }
+            
+            // Load feedback submission form
+            async function loadFeedbackForm() {
+                const code = getFeedbackCode();
+                if (!code) {
+                    console.error('No feedback code found');
+                    showError();
+                    return;
+                }
+                
+                try {
+                    console.log('Loading feedback form with code:', code);
+                    dynamicContent.innerHTML = `
+                        <section class="page-header">
+                            <div class="container">
+                                <h1>Submit Your Feedback</h1>
+                                <p>We value your opinion on our work</p>
+                            </div>
+                        </section>
+                        
+                        <section class="feedback-form-section">
+                            <div class="container">
+                                <div class="feedback-form-container">
+                                    <div class="form-header">
+                                        <h2>Share Your Experience</h2>
+                                        <p>Please tell us about your experience working with Shiva Fabrications.</p>
+                                    </div>
+                                    <form id="feedbackForm" class="feedback-form">
+                                        <input type="hidden" id="feedbackCode" value="${code}">
+                                        
+                                        <div class="form-group">
+                                            <label for="companyName">Company Name*</label>
+                                            <input type="text" id="companyName" name="companyName" required>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="authorName">Your Name*</label>
+                                            <input type="text" id="authorName" name="authorName" required>
+                                        </div>
+                                        
+                                        <div class="form-group full-width">
+                                            <label for="rating">How would you rate our service? (1-5)*</label>
+                                            <div class="rating-selector">
+                                                <div class="star-rating">
+                                                    <i class="far fa-star" data-rating="1"></i>
+                                                    <i class="far fa-star" data-rating="2"></i>
+                                                    <i class="far fa-star" data-rating="3"></i>
+                                                    <i class="far fa-star" data-rating="4"></i>
+                                                    <i class="far fa-star" data-rating="5"></i>
+                                                </div>
+                                                <input type="hidden" id="rating" name="rating" value="" required>
+                                                <div class="rating-text">Select a rating</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="form-group full-width">
+                                            <label for="feedbackText">Your Feedback*</label>
+                                            <textarea id="feedbackText" name="feedbackText" rows="6" required></textarea>
+                                        </div>
+                                        
+                                        <div class="form-group full-width">
+                                            <button type="submit" class="btn btn-primary">Submit Feedback</button>
+                                        </div>
+                                    </form>
+                                    <div class="form-success" style="display: none;">
+                                        <div class="success-icon">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        <h2>Thank You for Your Feedback!</h2>
+                                        <p>Your feedback has been submitted successfully. We appreciate you taking the time to share your experience with us.</p>
+                                        <a href="/index.html" class="btn btn-primary">Back to Home</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    `;
+                    
+                    // Setup star rating functionality
+                    const stars = document.querySelectorAll('.star-rating i');
+                    const ratingInput = document.getElementById('rating');
+                    const ratingText = document.querySelector('.rating-text');
+                    
+                    stars.forEach(star => {
+                        star.addEventListener('mouseover', function() {
+                            const rating = this.getAttribute('data-rating');
+                            highlightStars(rating);
+                        });
+                        
+                        star.addEventListener('mouseout', function() {
+                            const currentRating = ratingInput.value || 0;
+                            highlightStars(currentRating);
+                        });
+                        
+                        star.addEventListener('click', function() {
+                            const rating = this.getAttribute('data-rating');
+                            ratingInput.value = rating;
+                            highlightStars(rating);
+                            updateRatingText(rating);
+                        });
+                    });
+                    
+                    function highlightStars(rating) {
+                        stars.forEach(star => {
+                            const starRating = star.getAttribute('data-rating');
+                            if (starRating <= rating) {
+                                star.className = 'fas fa-star';
+                            } else {
+                                star.className = 'far fa-star';
+                            }
+                        });
+                    }
+                    
+                    function updateRatingText(rating) {
+                        const texts = [
+                            'Select a rating',
+                            'Poor',
+                            'Fair',
+                            'Good',
+                            'Very Good',
+                            'Excellent'
+                        ];
+                        ratingText.textContent = texts[rating] || texts[0];
+                    }
+                    
+                    // Setup form submission
+                    const feedbackForm = document.getElementById('feedbackForm');
+                    feedbackForm.addEventListener('submit', async function(e) {
+                        e.preventDefault();
+                        
+                        const submitBtn = feedbackForm.querySelector('button[type="submit"]');
+                        const originalText = submitBtn.textContent;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+                        submitBtn.disabled = true;
+                        
+                        const formData = {
+                            company_name: document.getElementById('companyName').value,
+                            author_name: document.getElementById('authorName').value,
+                            rating: parseInt(document.getElementById('rating').value),
+                            text: document.getElementById('feedbackText').value,
+                            feedback_code: document.getElementById('feedbackCode').value
+                        };
+                        
+                        try {
+                            console.log('Submitting feedback:', formData);
+                            const response = await fetch(`${API_URL}/feedback`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(formData)
+                            });
+                            
+                            console.log('Feedback submission response:', response.status);
+                            
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! Status: ${response.status}`);
+                            }
+                            
+                            // Show success message
+                            feedbackForm.style.display = 'none';
+                            document.querySelector('.form-success').style.display = 'block';
+                            document.querySelector('.form-header').style.display = 'none';
+                            
+                        } catch (error) {
+                            console.error('Error submitting feedback:', error);
+                            submitBtn.innerHTML = originalText;
+                            submitBtn.disabled = false;
+                            alert('There was an error submitting your feedback. Please try again.');
+                        }
+                    });
+                    
+                    // Update page title and meta
+                    document.title = 'Submit Feedback - Shiva Fabrications';
+                    
+                    // Hide loader
+                    const loader = document.querySelector('.loader');
+                    if (loader) {
+                        loader.classList.add('hidden');
+                        setTimeout(() => loader.remove(), 500);
+                    }
+                    
+                } catch (error) {
+                    console.error('Error loading feedback form:', error);
+                    showError();
+                }
+            }
+            
+            // Show error content
+            function showError() {
+                console.log('Showing error content');
+                dynamicContent.style.display = 'none';
+                errorContent.style.display = 'block';
+                
+                // Hide loader
+                const loader = document.querySelector('.loader');
+                if (loader) {
+                    loader.classList.add('hidden');
+                    setTimeout(() => loader.remove(), 500);
+                }
+            }
+            
+            // Initialize the page based on the URL
+            function initializePage() {
+                console.log('Initializing page');
+                if (isProjectPage()) {
+                    console.log('Loading project page');
+                    loadProject();
+                } else if (isFeedbackPage()) {
+                    console.log('Loading feedback form');
+                    loadFeedbackForm();
+                } else {
+                    console.log('No special page type detected, showing error');
+                    showError();
+                }
+            }
+            
+            // Handle mobile menu toggle
+            const hamburger = document.querySelector('.hamburger');
+            const navLinks = document.querySelector('.nav-links');
+            
+            if (hamburger) {
+                hamburger.addEventListener('click', () => {
+                    navLinks.classList.toggle('active');
+                    document.body.classList.toggle('no-scroll');
+                });
+            }
+            
+            // Scroll to top button
+            const scrollToTopBtn = document.querySelector('.scroll-to-top');
+            
+            window.addEventListener('scroll', () => {
+                if (window.pageYOffset > 300) {
+                    scrollToTopBtn.classList.add('show');
+                } else {
+                    scrollToTopBtn.classList.remove('show');
+                }
+            });
+            
+            scrollToTopBtn.addEventListener('click', () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+            
+            // Start the page initialization
+            initializePage();
+        });
+    </script>
 </body>
 </html>
