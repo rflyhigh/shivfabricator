@@ -18,6 +18,11 @@ document.addEventListener('DOMContentLoaded', function() {
         return true;
     }
     
+    // Redirect to login page
+    function redirectToLogin() {
+        window.location.href = 'login.html';
+    }
+    
     // Set admin name from localStorage
     if (adminNameElement) {
         const email = localStorage.getItem('adminEmail');
@@ -125,6 +130,64 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 3000);
     }
     
+    // Toggle modal visibility
+    function toggleModal(modal, show) {
+        if (show) {
+            modal.classList.add('active');
+            document.body.classList.add('no-scroll');
+        } else {
+            modal.classList.remove('active');
+            document.body.classList.remove('no-scroll');
+        }
+    }
+    
+    // Fetch with authentication token
+    async function fetchWithAuth(url, options = {}) {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            redirectToLogin();
+            return;
+        }
+
+        const headers = options.headers || {};
+        headers['Authorization'] = `Bearer ${token}`;
+        
+        // Ensure the URL has the correct base
+        let fullUrl = url;
+        if (!url.startsWith('http')) {
+            fullUrl = API_URL + (url.startsWith('/') ? url : '/' + url);
+        }
+
+        return fetch(fullUrl, {
+            ...options,
+            headers
+        });
+    }
+
+    // Debounce function to limit how often a function can be called
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(unsafe) {
+        if (typeof unsafe !== 'string') return unsafe;
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+    
     // Add CSS for toast if not already in the main CSS
     const toastStyle = document.createElement('style');
     toastStyle.textContent = `
@@ -184,8 +247,20 @@ document.addEventListener('DOMContentLoaded', function() {
         getAuthHeaders,
         handleApiError,
         formatDate,
-        showToast
+        showToast,
+        toggleModal,
+        fetchWithAuth,
+        debounce,
+        escapeHtml,
+        redirectToLogin
     };
+    
+    // Make functions globally available
+    window.showToast = showToast;
+    window.toggleModal = toggleModal;
+    window.fetchWithAuth = fetchWithAuth;
+    window.debounce = debounce;
+    window.escapeHtml = escapeHtml;
     
     // Check auth on page load
     checkAuth();
