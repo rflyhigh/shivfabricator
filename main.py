@@ -285,10 +285,10 @@ def generate_feedback_code():
     return ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(32))
 
 def get_project_url(slug):
-    return f"{BASE_URL}/projects/{slug}"
+    return f"https://shivafabrications.versz.fun//projects/{slug}"
 
 def get_feedback_url(code):
-    return f"{BASE_URL}/feedback?code={code}"
+    return f"https://shivafabrications.versz.fun/feedback?code={code}"
 
 # API routes
 @app.post("/api/token", response_model=Token)
