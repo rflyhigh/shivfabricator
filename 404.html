@@ -1072,7 +1072,7 @@
             color: var(--text-secondary);
         }
 
-.form-success {
+        .form-success {
             text-align: center;
             padding: 30px;
         }
@@ -1092,6 +1092,280 @@
         .form-success p {
             color: var(--text-secondary);
             margin-bottom: 30px;
+        }
+
+        /* Bill Styles */
+        .bill-container {
+            max-width: 900px;
+            margin: 100px auto 50px;
+            background-color: #fff;
+            color: #333;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+        }
+
+        .bill-header {
+            background-color: #f8f9fa;
+            padding: 30px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .bill-header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .bill-company {
+            flex: 1;
+        }
+
+        .bill-company h2 {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .bill-company p {
+            margin: 5px 0;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .bill-title {
+            text-align: right;
+        }
+
+        .bill-title h1 {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .bill-details {
+            padding: 30px;
+        }
+
+        .bill-info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .bill-to {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .bill-to h3, .bill-meta h3 {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .bill-to p {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        .bill-meta {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .bill-meta-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .bill-meta-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .bill-meta-value {
+            color: #333;
+        }
+
+        .bill-items {
+            margin-bottom: 30px;
+        }
+
+        .bill-items table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .bill-items th {
+            background-color: #f8f9fa;
+            color: #333;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #eee;
+        }
+
+        .bill-items td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            color: #555;
+        }
+
+        .bill-items .text-right {
+            text-align: right;
+        }
+
+        .bill-total {
+            margin-top: 20px;
+            border-top: 2px solid #eee;
+            padding-top: 20px;
+        }
+
+        .bill-total-row {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+
+        .bill-total-label {
+            width: 150px;
+            text-align: right;
+            padding-right: 20px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .bill-total-value {
+            width: 150px;
+            text-align: right;
+            color: #333;
+        }
+
+        .bill-grand-total {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .bill-words {
+            margin: 20px 0;
+            font-style: italic;
+            color: #555;
+        }
+
+        .bill-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .bill-signature {
+            width: 40%;
+            text-align: center;
+        }
+
+        .bill-signature-title {
+            margin-bottom: 50px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .bill-signature-line {
+            width: 100%;
+            border-top: 1px solid #555;
+            margin-bottom: 10px;
+        }
+
+        .bill-signature-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .bill-notes {
+            margin-top: 30px;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .bill-bank {
+            margin-top: 30px;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+        }
+
+        .bill-bank h3 {
+            font-size: 1.1rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .bill-bank p {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        .bill-actions {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .btn-download {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 25px;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-download i {
+            margin-right: 10px;
+        }
+
+        .btn-download:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .feedback-link {
+            margin-top: 30px;
+            text-align: center;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .feedback-link p {
+            margin-bottom: 15px;
+            color: #555;
+        }
+
+        .feedback-link a {
+            color: var(--primary-color);
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .feedback-link a:hover {
+            color: var(--primary-dark);
         }
 
         /* Responsive Styles */
@@ -1136,6 +1410,28 @@
                 display: block;
                 width: 100%;
             }
+            
+            .bill-header-content {
+                flex-direction: column;
+            }
+            
+            .bill-title {
+                text-align: left;
+                margin-top: 20px;
+            }
+            
+            .bill-info-row {
+                flex-direction: column;
+            }
+            
+            .bill-footer {
+                flex-direction: column;
+                gap: 30px;
+            }
+            
+            .bill-signature {
+                width: 100%;
+            }
         }
 
         @media (max-width: 767.98px) {
@@ -1175,6 +1471,32 @@
 
             .feedback-form-container {
                 padding: 30px 20px;
+            }
+            
+            .bill-container {
+                margin: 80px 15px 30px;
+            }
+            
+            .bill-header, .bill-details {
+                padding: 20px 15px;
+            }
+            
+            .bill-items {
+                overflow-x: auto;
+            }
+            
+            .bill-items table {
+                min-width: 600px;
+            }
+            
+            .bill-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn-download {
+                width: 100%;
+                justify-content: center;
             }
         }
     </style>
@@ -1295,7 +1617,7 @@
             const errorContent = document.getElementById('error-content');
             
             // Debug info
-            console.log('404.js loaded', {
+            console.log('Dynamic content loader initialized', {
                 'Current URL': window.location.href,
                 'Current Path': window.location.pathname,
                 'Search Params': window.location.search
@@ -1341,6 +1663,22 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const code = urlParams.get('code');
                 console.log('Feedback code:', code);
+                return code;
+            }
+            
+            // Function to check if this is a bill page
+            function isBillPage() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const isBill = window.location.pathname === '/bill' && urlParams.has('code');
+                console.log('Is bill page?', isBill);
+                return isBill;
+            }
+            
+            // Function to get the bill code from the URL
+            function getBillCode() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const code = urlParams.get('code');
+                console.log('Bill code:', code);
                 return code;
             }
             
@@ -1550,17 +1888,200 @@
                 }
             }
             
-            // Generate star rating HTML
-            function generateStarRating(rating) {
-                let stars = '';
-                for (let i = 1; i <= 5; i++) {
-                    if (i <= rating) {
-                        stars += '<i class="fas fa-star"></i>';
-                    } else {
-                        stars += '<i class="far fa-star"></i>';
-                    }
+            // Load bill details
+            async function loadBill() {
+                const code = getBillCode();
+                if (!code) {
+                    console.error('No bill code found');
+                    showError();
+                    return;
                 }
-                return stars;
+                
+                try {
+                    console.log('Fetching bill:', `${API_URL}/public/bill/${code}`);
+                    const response = await fetch(`${API_URL}/public/bill/${code}`);
+                    console.log('Response status:', response.status);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    
+                    const bill = await response.json();
+                    console.log('Bill data:', bill);
+                    renderBill(bill);
+                    
+                    // Update page title
+                    document.title = `Invoice #${bill.invoice_no} - Shiva Fabrications`;
+                    
+                    // Hide loader
+                    const loader = document.querySelector('.loader');
+                    if (loader) {
+                        loader.classList.add('hidden');
+                        setTimeout(() => loader.remove(), 500);
+                    }
+                } catch (error) {
+                    console.error('Error loading bill:', error);
+                    showError();
+                }
+            }
+            
+            // Render bill details
+            function renderBill(bill) {
+                // Create HTML for the bill
+                const billHtml = `
+                    <div class="bill-container">
+                        <div class="bill-header">
+                            <div class="bill-header-content">
+                                <div class="bill-company">
+                                    <h2>SHIVA FABRICATION</h2>
+                                    <p>Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015</p>
+                                    <p>Contact: 8805954132 / 9096553951</p>
+                                    <p>Email: shivfabricator1@gmail.com</p>
+                                </div>
+                                <div class="bill-title">
+                                    <h1>INVOICE</h1>
+                                    <p><strong>Invoice No:</strong> ${bill.invoice_no}</p>
+                                    <p><strong>Date:</strong> ${bill.date}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bill-details">
+                            <div class="bill-info-row">
+                                <div class="bill-to">
+                                    <h3>Bill To</h3>
+                                    <p><strong>${bill.bill_to}</strong></p>
+                                    <p>${bill.bill_to_address}</p>
+                                </div>
+                                
+                                <div class="bill-meta">
+                                    <h3>Invoice Details</h3>
+                                    ${bill.company_pan ? `<div class="bill-meta-item">
+                                        <span class="bill-meta-label">Company PAN:</span>
+                                        <span class="bill-meta-value">${bill.company_pan}</span>
+                                    </div>` : ''}
+                                    
+                                    ${bill.suppliers_ref_no ? `<div class="bill-meta-item">
+                                        <span class="bill-meta-label">Supplier's Ref No:</span>
+                                        <span class="bill-meta-value">${bill.suppliers_ref_no}</span>
+                                    </div>` : ''}
+                                    
+                                    ${bill.buyers_order_no ? `<div class="bill-meta-item">
+                                        <span class="bill-meta-label">Buyer's Order No:</span>
+                                        <span class="bill-meta-value">${bill.buyers_order_no}</span>
+                                    </div>` : ''}
+                                    
+                                    ${bill.other_terms ? `<div class="bill-meta-item">
+                                        <span class="bill-meta-label">Other Terms:</span>
+                                        <span class="bill-meta-value">${bill.other_terms}</span>
+                                    </div>` : ''}
+                                </div>
+                            </div>
+                            
+                            <div class="bill-items">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Sr.No.</th>
+                                            <th>HSN/SAC</th>
+                                            <th>Description</th>
+                                            <th>Qty</th>
+                                            <th>Unit</th>
+                                            <th class="text-right">Rate</th>
+                                            <th class="text-right">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${bill.items.map(item => `
+                                            <tr>
+                                                <td>${item.sr_no}</td>
+                                                <td>${item.hsn_code || '-'}</td>
+                                                <td>${item.description}</td>
+                                                <td>${item.qty || '-'}</td>
+                                                <td>${item.unit || '-'}</td>
+                                                <td class="text-right">₹${item.rate.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                <td class="text-right">₹${item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                <td>${item.sr_no}</td>
+                                                <td>${item.hsn_code || '-'}</td>
+                                                <td>${item.description}</td>
+                                                <td>${item.qty || '-'}</td>
+                                                <td>${item.unit || '-'}</td>
+                                                <td class="text-right">₹${item.rate.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                <td class="text-right">₹${item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="bill-total">
+                                <div class="bill-total-row">
+                                    <div class="bill-total-label">Sub Total:</div>
+                                    <div class="bill-total-value">₹${bill.sub_total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                </div>
+                                
+                                ${bill.gst ? `<div class="bill-total-row">
+                                    <div class="bill-total-label">GST:</div>
+                                    <div class="bill-total-value">₹${bill.gst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                </div>` : ''}
+                                
+                                ${bill.round_off ? `<div class="bill-total-row">
+                                    <div class="bill-total-label">Round Off:</div>
+                                    <div class="bill-total-value">₹${bill.round_off.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                </div>` : ''}
+                                
+                                <div class="bill-total-row">
+                                    <div class="bill-total-label bill-grand-total">Grand Total:</div>
+                                    <div class="bill-total-value bill-grand-total">₹${bill.grand_total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="bill-words">
+                                <strong>Amount in words:</strong> ${bill.amount_in_words}
+                            </div>
+                            
+                            <div class="bill-footer">
+                                <div class="bill-signature">
+                                    <div class="bill-signature-title">Customer Seal and Signature</div>
+                                    <div class="bill-signature-line"></div>
+                                </div>
+                                
+                                <div class="bill-signature">
+                                    <div class="bill-signature-title">For SHIVA FABRICATION</div>
+                                    <div class="bill-signature-line"></div>
+                                    <div class="bill-signature-name">Proprietor</div>
+                                </div>
+                            </div>
+                            
+                            <div class="bill-bank">
+                                <h3>Bank Details</h3>
+                                <p>Name of the Beneficiary: SHIVA FABRICATION</p>
+                                <p>A/C NO. 110504180001097</p>
+                                <p>IFSC CODE: SVCB0000105</p>
+                            </div>
+                            
+                            <div class="bill-notes">
+                                <p><strong>Declaration:</strong> We declare that this invoice shows the actual price of the labour work described and that all particulars are true and correct.</p>
+                            </div>
+                            
+                            <div class="bill-actions">
+                                <a href="${bill.download_url}" class="btn-download" target="_blank">
+                                    <i class="fas fa-download"></i> Download PDF
+                                </a>
+                            </div>
+                            
+                            ${bill.feedback_url ? `
+                                <div class="feedback-link">
+                                    <p>We value your feedback! Please share your experience with our services.</p>
+                                    <a href="${bill.feedback_url}" target="_blank">Provide Feedback</a>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                
+                // Set the content
+                dynamicContent.innerHTML = billHtml;
             }
             
             // Load feedback submission form
@@ -1749,6 +2270,19 @@
                 }
             }
             
+            // Generate star rating HTML
+            function generateStarRating(rating) {
+                let stars = '';
+                for (let i = 1; i <= 5; i++) {
+                    if (i <= rating) {
+                        stars += '<i class="fas fa-star"></i>';
+                    } else {
+                        stars += '<i class="far fa-star"></i>';
+                    }
+                }
+                return stars;
+            }
+            
             // Show error content
             function showError() {
                 console.log('Showing error content');
@@ -1772,6 +2306,9 @@
                 } else if (isFeedbackPage()) {
                     console.log('Loading feedback form');
                     loadFeedbackForm();
+                } else if (isBillPage()) {
+                    console.log('Loading bill page');
+                    loadBill();
                 } else {
                     console.log('No special page type detected, showing error');
                     showError();
