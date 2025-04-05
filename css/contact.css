@@ -267,3 +267,74 @@
         font-size: 1.8rem;
     }
 }
+/* Add these to your style.css file */
+
+/* Mobile Menu Fixes */
+.hamburger {
+    display: none;
+    cursor: pointer;
+    z-index: 1010;
+    padding: 10px;
+}
+
+.hamburger .line {
+    width: 30px;
+    height: 2px;
+    background-color: var(--text-primary);
+    margin: 6px 0;
+    transition: var(--transition);
+}
+
+.hamburger.active .line:nth-child(1) {
+    transform: rotate(-45deg) translate(-5px, 6px);
+}
+
+.hamburger.active .line:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger.active .line:nth-child(3) {
+    transform: rotate(45deg) translate(-5px, -6px);
+}
+
+@media (max-width: 991.98px) {
+    .hamburger {
+        display: block;
+    }
+    
+    .nav-links {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 300px;
+        height: 100vh;
+        background-color: var(--darker-bg);
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        padding: 100px 40px 40px;
+        transition: right 0.3s ease;
+        box-shadow: -5px 0 30px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        overflow-y: auto;
+    }
+    
+    .nav-links.active {
+        right: 0;
+    }
+    
+    .nav-links li {
+        margin: 15px 0;
+        width: 100%;
+    }
+    
+    .nav-links a {
+        display: block;
+        width: 100%;
+        padding: 10px 0;
+    }
+    
+    body.no-scroll {
+        overflow: hidden;
+    }
+}
