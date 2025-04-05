@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, Form, UploadFile, File, Request, Response, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse, FileResponse
 from pydantic import BaseModel, EmailStr, Field, HttpUrl
 from typing import List, Optional, Union, Dict, Any
 from pymongo import MongoClient
@@ -20,6 +20,13 @@ import motor.motor_asyncio
 from dotenv import load_dotenv
 import aiohttp
 import asyncio
+import uuid
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import Table, TableStyle
+from io import BytesIO
+import json
 
 # Load environment variables
 load_dotenv()
@@ -32,7 +39,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 IMGBB_API_KEY = os.getenv("IMGBB_API_KEY")
-BASE_URL = os.getenv("BASE_URL", "https://shivafabricator.com")
+BASE_URL = os.getenv("BASE_URL", "https://shivafabrications.versz.fun")
 
 # FastAPI app
 app = FastAPI(title="Shiva Fabrications API")
@@ -190,6 +197,77 @@ class FeedbackInDB(Feedback):
             ObjectId: str
         }
 
+class BillItem(BaseModel):
+    sr_no: int
+    hsn_code: Optional[str] = None
+    description: str
+    qty: Optional[str] = None
+    unit: Optional[str] = None
+    rate: float
+    amount: float
+
+class Bill(BaseModel):
+    invoice_no: str
+    date: str
+    bill_to: str
+    bill_to_address: str
+    company_pan: Optional[str] = None
+    suppliers_ref_no: Optional[str] = None
+    buyers_order_no: Optional[str] = None
+    other_terms: Optional[str] = None
+    items: List[BillItem]
+    sub_total: float
+    gst: Optional[float] = None
+    round_off: Optional[float] = None
+    grand_total: float
+    amount_in_words: str
+    enable_feedback: bool = False
+    project_slug: Optional[str] = None
+    feedback_code: Optional[str] = None
+    
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {
+            ObjectId: str
+        }
+
+class BillInDB(Bill):
+    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    bill_code: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    
+    class Config:
+        allow_population_by_field_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {
+            ObjectId: str
+        }
+
+class BillUpdate(BaseModel):
+    invoice_no: Optional[str] = None
+    date: Optional[str] = None
+    bill_to: Optional[str] = None
+    bill_to_address: Optional[str] = None
+    company_pan: Optional[str] = None
+    suppliers_ref_no: Optional[str] = None
+    buyers_order_no: Optional[str] = None
+    other_terms: Optional[str] = None
+    items: Optional[List[BillItem]] = None
+    sub_total: Optional[float] = None
+    gst: Optional[float] = None
+    round_off: Optional[float] = None
+    grand_total: Optional[float] = None
+    amount_in_words: Optional[str] = None
+    enable_feedback: Optional[bool] = None
+    project_slug: Optional[str] = None
+    
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {
+            ObjectId: str
+        }
+
 class HealthCheck(BaseModel):
     status: str = "ok"
     timestamp: datetime = Field(default_factory=datetime.utcnow)
@@ -285,10 +363,141 @@ def generate_feedback_code():
     return ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(32))
 
 def get_project_url(slug):
-    return f"https://shivafabrications.versz.fun//projects/{slug}"
+    return f"{BASE_URL}/projects/{slug}"
 
 def get_feedback_url(code):
-    return f"https://shivafabrications.versz.fun/feedback?code={code}"
+    return f"{BASE_URL}/feedback?code={code}"
+
+def get_bill_url(bill_code):
+    return f"{BASE_URL}/bill?code={bill_code}"
+
+def generate_bill_pdf(bill: BillInDB):
+    buffer = BytesIO()
+    
+    # Create PDF
+    c = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+    
+    # Title
+    c.setFont("Helvetica-Bold", 18)
+    c.drawCentredString(width/2, height - 50, "INVOICE")
+    
+    # Company details
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(50, height - 80, "SHIVA FABRICATION")
+    c.setFont("Helvetica", 10)
+    c.drawString(50, height - 95, "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015")
+    c.drawString(50, height - 110, "Contact: 8805954132 / 9096553951   shivfabricator1@gmail.com")
+    
+    # Bill To
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(50, height - 140, "Bill To,")
+    c.setFont("Helvetica", 10)
+    c.drawString(50, height - 155, bill.bill_to)
+    
+    # Add address with line breaks
+    address_lines = bill.bill_to_address.split(', ')
+    y_position = height - 170
+    for line in address_lines:
+        c.drawString(50, y_position, line)
+        y_position -= 15
+    
+    # Company PAN and Bank Details
+    c.setFont("Helvetica-Bold", 9)
+    c.drawString(50, height - 215, "Company PAN: " + (bill.company_pan or ""))
+    c.drawString(50, height - 230, "Declaration:")
+    c.setFont("Helvetica", 8)
+    c.drawString(50, height - 245, "We Declare that this invoice shows the actual price of the labour")
+    c.drawString(50, height - 255, "work described and that all purchases are true and correct")
+    
+    # Bank details
+    c.setFont("Helvetica-Bold", 9)
+    c.drawString(350, height - 215, "Bank Details:")
+    c.setFont("Helvetica", 8)
+    c.drawString(350, height - 230, "Name of the Beneficiary: SHIVA FABRICATION")
+    c.drawString(350, height - 245, "A/C NO. 110504180001097")
+    c.drawString(350, height - 260, "IFSC CODE: SVCB0000105")
+    c.drawString(350, height - 275, "THANKYOU FOR YOUR BUSINESS")
+    
+    # Invoice details
+    c.setFont("Helvetica-Bold", 9)
+    c.drawString(50, height - 295, f"Invoice No: {bill.invoice_no}")
+    c.drawString(250, height - 295, f"Dated: {bill.date}")
+    c.drawString(50, height - 310, f"Suppliers Ref No: {bill.suppliers_ref_no or '-'}")
+    c.drawString(50, height - 325, f"Buyers Order No: {bill.buyers_order_no or '-'}")
+    c.drawString(50, height - 340, f"Other Terms: {bill.other_terms or '-'}")
+    
+    # Table headers
+    data = [
+        ["Sr.No.", "HSN/SAC CODE", "DESCRIPTION", "Qty", "Unit", "Rate", "Amount"]
+    ]
+    
+    # Add items to table
+    for item in bill.items:
+        data.append([
+            str(item.sr_no),
+            item.hsn_code or "-",
+            item.description,
+            item.qty or "-",
+            item.unit or "-",
+            f"{item.rate:,.2f}",
+            f"{item.amount:,.2f}"
+        ])
+    
+    # Create table
+    table = Table(data, colWidths=[40, 70, 200, 50, 50, 70, 70])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('ALIGN', (2, 1), (2, -1), 'LEFT'),  # Description column left-aligned
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    
+    # Draw the table
+    table.wrapOn(c, width, height)
+    table.drawOn(c, 30, height - 430)
+    
+    # Totals
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(400, height - 460, "Sub Total:")
+    c.drawString(500, height - 460, f"{bill.sub_total:,.2f}")
+    
+    y_offset = 475
+    if bill.gst:
+        c.drawString(400, height - y_offset, "GST:")
+        c.drawString(500, height - y_offset, f"{bill.gst:,.2f}")
+        y_offset += 15
+    
+    if bill.round_off:
+        c.drawString(400, height - y_offset, "Round off:")
+        c.drawString(500, height - y_offset, f"{bill.round_off:,.2f}")
+        y_offset += 15
+    
+    c.drawString(400, height - y_offset, "Grand Total Amount:")
+    c.drawString(500, height - y_offset, f"{bill.grand_total:,.2f}")
+    
+    # Amount in words
+    c.setFont("Helvetica", 10)
+    c.drawString(50, height - 460, "Amount in words: " + bill.amount_in_words)
+    
+    # Signatures
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(50, height - 520, "Customer Seal and Signature:")
+    c.drawString(400, height - 520, "For SHIVA FABRICATION:")
+    c.drawString(400, height - 550, "Proprietor")
+    
+    # If feedback is enabled, add the feedback URL
+    if bill.enable_feedback and bill.feedback_code:
+        c.setFont("Helvetica", 8)
+        feedback_url = get_feedback_url(bill.feedback_code)
+        c.drawString(50, height - 580, f"Please provide your feedback at: {feedback_url}")
+    
+    c.save()
+    buffer.seek(0)
+    return buffer
 
 # API routes
 @app.post("/api/token", response_model=Token)
@@ -552,6 +761,7 @@ async def get_stats(current_user: User = Depends(get_current_active_user)):
     active_projects = await db.projects.count_documents({"active": True})
     total_messages = await db.contact_messages.count_documents({})
     total_feedback = await db.feedback.count_documents({})
+    total_bills = await db.bills.count_documents({})
     
     # Get projects by category
     categories = await db.projects.distinct("category")
@@ -572,9 +782,170 @@ async def get_stats(current_user: User = Depends(get_current_active_user)):
         "active_projects": active_projects,
         "total_messages": total_messages,
         "total_feedback": total_feedback,
+        "total_bills": total_bills,
         "projects_by_category": projects_by_category,
         "average_rating": avg_rating
     }
+
+# Bill-related endpoints
+@app.post("/api/bills", response_model=Dict[str, Any])
+async def create_bill(bill: Bill, current_user: User = Depends(get_current_active_user)):
+    bill_dict = bill.dict()
+    
+    # Handle feedback linking if needed
+    if bill.enable_feedback and bill.project_slug:
+        project = await db.projects.find_one({"slug": bill.project_slug})
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        # Get or create feedback code
+        code_doc = await db.feedback_codes.find_one({"project_id": str(project["_id"])})
+        if not code_doc:
+            feedback_code = generate_feedback_code()
+            await db.feedback_codes.insert_one({
+                "project_id": str(project["_id"]),
+                "code": feedback_code,
+                "created_at": datetime.utcnow()
+            })
+        else:
+            feedback_code = code_doc["code"]
+        
+        bill_dict["feedback_code"] = feedback_code
+    
+    # Generate a unique bill code
+    bill_dict["bill_code"] = str(uuid.uuid4())
+    bill_dict["created_at"] = datetime.utcnow()
+    bill_dict["updated_at"] = bill_dict["created_at"]
+    
+    result = await db.bills.insert_one(bill_dict)
+    created_bill = await db.bills.find_one({"_id": result.inserted_id})
+    
+    # Return the bill with its public URL
+    bill_url = get_bill_url(created_bill["bill_code"])
+    return {**created_bill, "bill_url": bill_url}
+
+@app.get("/api/bills", response_model=List[Dict[str, Any]])
+async def get_bills(
+    skip: int = 0,
+    limit: int = 20,
+    current_user: User = Depends(get_current_active_user)
+):
+    bills = await db.bills.find().sort("created_at", -1).skip(skip).limit(limit).to_list(length=limit)
+    
+    # Add bill URLs to each bill
+    for bill in bills:
+        bill["bill_url"] = get_bill_url(bill["bill_code"])
+    
+    return bills
+
+@app.get("/api/bills/{bill_id}", response_model=Dict[str, Any])
+async def get_bill_by_id(bill_id: str, current_user: User = Depends(get_current_active_user)):
+    bill = await db.bills.find_one({"_id": ObjectId(bill_id)})
+    if not bill:
+        raise HTTPException(status_code=404, detail="Bill not found")
+    
+    # Add bill URL
+    bill["bill_url"] = get_bill_url(bill["bill_code"])
+    
+    return bill
+
+@app.put("/api/bills/{bill_id}", response_model=Dict[str, Any])
+async def update_bill(
+    bill_id: str,
+    bill_update: BillUpdate,
+    current_user: User = Depends(get_current_active_user)
+):
+    bill = await db.bills.find_one({"_id": ObjectId(bill_id)})
+    if not bill:
+        raise HTTPException(status_code=404, detail="Bill not found")
+    
+    update_data = bill_update.dict(exclude_unset=True)
+    
+    # Handle feedback linking if needed
+    if "enable_feedback" in update_data and update_data["enable_feedback"] and "project_slug" in update_data:
+        project = await db.projects.find_one({"slug": update_data["project_slug"]})
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        # Get or create feedback code
+        code_doc = await db.feedback_codes.find_one({"project_id": str(project["_id"])})
+        if not code_doc:
+            feedback_code = generate_feedback_code()
+            await db.feedback_codes.insert_one({
+                "project_id": str(project["_id"]),
+                "code": feedback_code,
+                "created_at": datetime.utcnow()
+            })
+        else:
+            feedback_code = code_doc["code"]
+        
+        update_data["feedback_code"] = feedback_code
+    
+    if update_data:
+        update_data["updated_at"] = datetime.utcnow()
+        await db.bills.update_one(
+            {"_id": ObjectId(bill_id)}, {"$set": update_data}
+        )
+    
+    updated_bill = await db.bills.find_one({"_id": ObjectId(bill_id)})
+    updated_bill["bill_url"] = get_bill_url(updated_bill["bill_code"])
+    
+    return updated_bill
+
+@app.delete("/api/bills/{bill_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_bill(bill_id: str, current_user: User = Depends(get_current_active_user)):
+    result = await db.bills.delete_one({"_id": ObjectId(bill_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Bill not found")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@app.get("/api/bills/{bill_id}/download")
+async def download_bill_pdf(bill_id: str):
+    bill = await db.bills.find_one({"_id": ObjectId(bill_id)})
+    if not bill:
+        raise HTTPException(status_code=404, detail="Bill not found")
+    
+    pdf_buffer = generate_bill_pdf(BillInDB(**bill))
+    
+    # Create a temporary file
+    temp_file = f"/tmp/{bill['bill_code']}.pdf"
+    with open(temp_file, "wb") as f:
+        f.write(pdf_buffer.read())
+    
+    return FileResponse(
+        path=temp_file,
+        filename=f"invoice_{bill['invoice_no']}.pdf",
+        media_type="application/pdf"
+    )
+
+@app.get("/api/public/bill/{bill_code}", response_model=Dict[str, Any])
+async def get_bill_by_code(bill_code: str):
+    """Get bill data by its public code - accessible without authentication"""
+    bill = await db.bills.find_one({"bill_code": bill_code})
+    if not bill:
+        raise HTTPException(status_code=404, detail="Bill not found")
+    
+    # Add download URL
+    bill["download_url"] = f"/api/bills/{bill['_id']}/download"
+    
+    # Add feedback URL if applicable
+    if bill.get("enable_feedback") and bill.get("feedback_code"):
+        bill["feedback_url"] = get_feedback_url(bill["feedback_code"])
+    
+    # Add company details
+    bill["company"] = {
+        "name": "SHIVA FABRICATION",
+        "address": "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015",
+        "contact": "8805954132 / 9096553951",
+        "email": "shivfabricator1@gmail.com",
+        "bank_details": {
+            "beneficiary": "SHIVA FABRICATION",
+            "account_no": "110504180001097",
+            "ifsc_code": "SVCB0000105"
+        }
+    }
+    
+    return bill
 
 # Keep the server alive by pinging the health endpoint every 10 minutes
 async def keep_alive():
@@ -598,6 +969,10 @@ async def startup_event():
     await db.feedback_codes.create_index("project_id")
     await db.feedback.create_index("project_id")
     await db.feedback.create_index("approved")
+    
+    # New indexes for bills
+    await db.bills.create_index("bill_code", unique=True)
+    await db.bills.create_index("created_at")
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
