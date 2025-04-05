@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loader.className = 'loader';
     loader.innerHTML = `
         <div class="loader-content">
-            <img src="https://bashify.io/img/83d634b9fbf24719568b37ab2e2e00d9" alt="Shiva Fabrications Logo" class="loader-logo">
+            <img src="/logo.png" alt="Shiva Fabrications Logo" class="loader-logo">
             <div class="loader-spinner"></div>
             <div class="loader-text">LOADING</div>
         </div>
