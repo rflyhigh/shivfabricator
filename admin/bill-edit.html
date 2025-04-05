@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Bill - Shiva Fabrications</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="sidebar-header">
+                <img src="/logo.png" alt="Shiva Fabrications Logo" class="sidebar-logo">
+                <div class="sidebar-title">Shiva Admin</div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="sidebar-nav-title">MAIN MENU</div>
+                <ul class="sidebar-menu">
+                    <li class="sidebar-menu-item">
+                        <a href="index.html" class="sidebar-menu-link">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="projects.html" class="sidebar-menu-link">
+                            <i class="fas fa-project-diagram"></i>
+                            <span>Projects</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="messages.html" class="sidebar-menu-link">
+                            <i class="fas fa-envelope"></i>
+                            <span>Messages</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="feedback.html" class="sidebar-menu-link">
+                            <i class="fas fa-comments"></i>
+                            <span>Feedback</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="bills.html" class="sidebar-menu-link active">
+                            <i class="fas fa-file-invoice"></i>
+                            <span>Bills</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-details">
+                        <div class="user-name" id="adminName">Admin</div>
+                        <div class="user-role">Administrator</div>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+        
+        <!-- Backdrop for mobile -->
+        <div class="admin-sidebar-backdrop" id="sidebarBackdrop"></div>
+        
+        <!-- Header -->
+        <header class="admin-header">
+            <div class="header-left">
+                <div class="toggle-sidebar" id="toggleSidebar">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <h1 class="page-title" id="billTitle">New Bill</h1>
+            </div>
+            <div class="header-right">
+                <a href="bills.html" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left"></i> Back to Bills
+                </a>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="admin-main">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h2 class="admin-card-title" id="formTitle">Create New Bill</h2>
+                </div>
+                <div class="admin-card-body">
+                    <form id="billForm" class="admin-form">
+                        <input type="hidden" id="billId">
+                        
+                        <div class="admin-form-row">
+                            <div class="admin-form-group">
+                                <label for="invoice_no">Invoice No*</label>
+                                <input type="text" id="invoice_no" name="invoice_no" class="admin-form-control" required>
+                            </div>
+                            <div class="admin-form-group">
+                                <label for="date">Date*</label>
+                                <input type="text" id="date" name="date" class="admin-form-control" required placeholder="e.g. 20 March, 2023">
+                            </div>
+                        </div>
+                        
+                        <div class="admin-form-row">
+                            <div class="admin-form-group">
+                                <label for="bill_to">Bill To (Company Name)*</label>
+                                <input type="text" id="bill_to" name="bill_to" class="admin-form-control" required>
+                            </div>
+                            <div class="admin-form-group">
+                                <label for="company_pan">Company PAN</label>
+                                <input type="text" id="company_pan" name="company_pan" class="admin-form-control">
+                            </div>
+                        </div>
+                        
+                        <div class="admin-form-group">
+                            <label for="bill_to_address">Bill To Address*</label>
+                            <textarea id="bill_to_address" name="bill_to_address" class="admin-form-control" required placeholder="Full address with commas separating lines"></textarea>
+                        </div>
+                        
+                        <div class="admin-form-row">
+                            <div class="admin-form-group">
+                                <label for="suppliers_ref_no">Supplier's Ref No</label>
+                                <input type="text" id="suppliers_ref_no" name="suppliers_ref_no" class="admin-form-control">
+                            </div>
+                            <div class="admin-form-group">
+                                <label for="buyers_order_no">Buyer's Order No</label>
+                                <input type="text" id="buyers_order_no" name="buyers_order_no" class="admin-form-control">
+                            </div>
+                            <div class="admin-form-group">
+                                <label for="other_terms">Other Terms</label>
+                                <input type="text" id="other_terms" name="other_terms" class="admin-form-control">
+                            </div>
+                        </div>
+                        
+                        <div class="admin-form-group">
+                            <label>Bill Items*</label>
+                            <div class="admin-table-responsive">
+                                <table class="admin-table" id="itemsTable">
+                                    <thead>
+                                        <tr>
+                                            <th width="60">Sr.No.</th>
+                                            <th width="120">HSN/SAC Code</th>
+                                            <th>Description</th>
+                                            <th width="80">Qty</th>
+                                            <th width="80">Unit</th>
+                                            <th width="100">Rate</th>
+                                            <th width="120">Amount</th>
+                                            <th width="60">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="billItems">
+                                        <tr>
+                                            <td><input type="number" class="admin-form-control item-sr-no" value="1" min="1"></td>
+                                            <td><input type="text" class="admin-form-control item-hsn-code" placeholder="-"></td>
+                                            <td><input type="text" class="admin-form-control item-description" required placeholder="Item description"></td>
+                                            <td><input type="text" class="admin-form-control item-qty" placeholder="-"></td>
+                                            <td><input type="text" class="admin-form-control item-unit" placeholder="-"></td>
+                                            <td><input type="number" class="admin-form-control item-rate" required step="0.01" min="0"></td>
+                                            <td><input type="number" class="admin-form-control item-amount" required step="0.01" min="0"></td>
+                                            <td>
+                                                <button type="button" class="dynamic-field-remove action-btn delete">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button type="button" class="dynamic-field-add" id="addBillItem">
+                                <i class="fas fa-plus-circle"></i> Add Item
+                            </button>
+                        </div>
+                        
+                        <div class="admin-form-row">
+                            <div class="admin-form-group">
+                                <label for="sub_total">Sub Total*</label>
+                                <input type="number" id="sub_total" name="sub_total" class="admin-form-control" required step="0.01" min="0" readonly>
+                            </div>
+                            <div class="admin-form-group">
+                                <label for="gst">GST</label>
+                                <input type="number" id="gst" name="gst" class="admin-form-control" step="0.01" min="0">
+                            </div>
+                            <div class="admin-form-group">
+                                <label for="round_off">Round Off</label>
+                                <input type="number" id="round_off" name="round_off" class="admin-form-control" step="0.01">
+                            </div>
+                        </div>
+                        
+                        <div class="admin-form-row">
+                            <div class="admin-form-group">
+                                <label for="grand_total">Grand Total*</label>
+                                <input type="number" id="grand_total" name="grand_total" class="admin-form-control" required step="0.01" min="0">
+                            </div>
+                            <div class="admin-form-group">
+                                <label for="amount_in_words">Amount in Words*</label>
+                                <input type="text" id="amount_in_words" name="amount_in_words" class="admin-form-control" required>
+                                <div class="admin-form-help">e.g. Six Thousand Only</div>
+                            </div>
+                        </div>
+                        
+                        <div class="admin-form-row">
+                            <div class="admin-form-group">
+                                <div class="admin-form-checkbox">
+                                    <input type="checkbox" id="enable_feedback" name="enable_feedback">
+                                    <label for="enable_feedback">Enable feedback for this bill</label>
+                                </div>
+                            </div>
+                            <div class="admin-form-group" id="projectSelectGroup" style="display: none;">
+                                <label for="project_slug">Link to Project</label>
+                                <select id="project_slug" name="project_slug" class="admin-form-select">
+                                    <option value="">Select a project</option>
+                                    <!-- Projects will be loaded dynamically -->
+                                </select>
+                                <div class="admin-form-help">Selecting a project will allow customers to provide feedback</div>
+                            </div>
+                        </div>
+                        
+                        <div class="admin-form-buttons">
+                            <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="saveBtn">Save Bill</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="../js/admin-common.js"></script>
+    <script src="../js/admin-bill-edit.js"></script>
+</body>
+</html>
