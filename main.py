@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse, RedirectResponse, FileResponse
 from pydantic import BaseModel, EmailStr, Field, HttpUrl
 from typing import List, Optional, Union, Dict, Any
 from pymongo import MongoClient
-from bson import ObjectId
+from bson import ObjectId, json_util
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
@@ -27,6 +27,7 @@ from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
 from io import BytesIO
 import json
+from fastapi.encoders import jsonable_encoder
 
 # Load environment variables
 load_dotenv()
@@ -61,6 +62,16 @@ db = client.shiva_fabrications
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/token")
 
+# Helper function to serialize MongoDB documents
+def serialize_mongo_doc(doc):
+    """Convert MongoDB document to a JSON-serializable dict"""
+    if doc is None:
+        return None
+    doc_dict = dict(doc)
+    if '_id' in doc_dict and isinstance(doc_dict['_id'], ObjectId):
+        doc_dict['_id'] = str(doc_dict['_id'])
+    return doc_dict
+
 # Pydantic models
 class Token(BaseModel):
     access_token: str
@@ -90,6 +101,9 @@ class PyObjectId(ObjectId):
     @classmethod
     def __modify_schema__(cls, field_schema):
         field_schema.update(type="string")
+    
+    def __str__(self):
+        return str(self)
 
 class ProjectBase(BaseModel):
     title: str
@@ -820,6 +834,9 @@ async def create_bill(bill: Bill, current_user: User = Depends(get_current_activ
     result = await db.bills.insert_one(bill_dict)
     created_bill = await db.bills.find_one({"_id": result.inserted_id})
     
+    # Convert ObjectId to string for JSON serialization
+    created_bill = serialize_mongo_doc(created_bill)
+    
     # Return the bill with its public URL
     bill_url = get_bill_url(created_bill["bill_code"])
     return {**created_bill, "bill_url": bill_url}
@@ -830,11 +847,14 @@ async def get_bills(
     limit: int = 20,
     current_user: User = Depends(get_current_active_user)
 ):
-    bills = await db.bills.find().sort("created_at", -1).skip(skip).limit(limit).to_list(length=limit)
+    bills_cursor = db.bills.find().sort("created_at", -1).skip(skip).limit(limit)
+    bills = []
     
-    # Add bill URLs to each bill
-    for bill in bills:
-        bill["bill_url"] = get_bill_url(bill["bill_code"])
+    async for bill in bills_cursor:
+        # Convert to a serializable format
+        bill_dict = serialize_mongo_doc(bill)
+        bill_dict["bill_url"] = get_bill_url(bill_dict["bill_code"])
+        bills.append(bill_dict)
     
     return bills
 
@@ -844,10 +864,11 @@ async def get_bill_by_id(bill_id: str, current_user: User = Depends(get_current_
     if not bill:
         raise HTTPException(status_code=404, detail="Bill not found")
     
-    # Add bill URL
-    bill["bill_url"] = get_bill_url(bill["bill_code"])
+    # Convert to a serializable format
+    bill_dict = serialize_mongo_doc(bill)
+    bill_dict["bill_url"] = get_bill_url(bill_dict["bill_code"])
     
-    return bill
+    return bill_dict
 
 @app.put("/api/bills/{bill_id}", response_model=Dict[str, Any])
 async def update_bill(
@@ -888,9 +909,12 @@ async def update_bill(
         )
     
     updated_bill = await db.bills.find_one({"_id": ObjectId(bill_id)})
-    updated_bill["bill_url"] = get_bill_url(updated_bill["bill_code"])
     
-    return updated_bill
+    # Convert to a serializable format
+    updated_bill_dict = serialize_mongo_doc(updated_bill)
+    updated_bill_dict["bill_url"] = get_bill_url(updated_bill_dict["bill_code"])
+    
+    return updated_bill_dict
 
 @app.delete("/api/bills/{bill_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_bill(bill_id: str, current_user: User = Depends(get_current_active_user)):
@@ -905,7 +929,9 @@ async def download_bill_pdf(bill_id: str):
     if not bill:
         raise HTTPException(status_code=404, detail="Bill not found")
     
-    pdf_buffer = generate_bill_pdf(BillInDB(**bill))
+    # Convert to BillInDB model
+    bill_model = BillInDB(**serialize_mongo_doc(bill))
+    pdf_buffer = generate_bill_pdf(bill_model)
     
     # Create a temporary file
     temp_file = f"/tmp/{bill['bill_code']}.pdf"
@@ -925,15 +951,18 @@ async def get_bill_by_code(bill_code: str):
     if not bill:
         raise HTTPException(status_code=404, detail="Bill not found")
     
+    # Convert to a serializable format
+    bill_dict = serialize_mongo_doc(bill)
+    
     # Add download URL
-    bill["download_url"] = f"/api/bills/{bill['_id']}/download"
+    bill_dict["download_url"] = f"/api/bills/{bill_dict['_id']}/download"
     
     # Add feedback URL if applicable
-    if bill.get("enable_feedback") and bill.get("feedback_code"):
-        bill["feedback_url"] = get_feedback_url(bill["feedback_code"])
+    if bill_dict.get("enable_feedback") and bill_dict.get("feedback_code"):
+        bill_dict["feedback_url"] = get_feedback_url(bill_dict["feedback_code"])
     
     # Add company details
-    bill["company"] = {
+    bill_dict["company"] = {
         "name": "SHIVA FABRICATION",
         "address": "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015",
         "contact": "8805954132 / 9096553951",
@@ -945,7 +974,7 @@ async def get_bill_by_code(bill_code: str):
         }
     }
     
-    return bill
+    return bill_dict
 
 # Keep the server alive by pinging the health endpoint every 10 minutes
 async def keep_alive():
