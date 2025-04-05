@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Shiva Fabrications</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="sidebar-header">
+                <img src="https://bashify.io/img/83d634b9fbf24719568b37ab2e2e00d9" alt="Shiva Fabrications Logo" class="sidebar-logo">
+                <div class="sidebar-title">Shiva Admin</div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="sidebar-nav-title">MAIN MENU</div>
+                <ul class="sidebar-menu">
+                    <li class="sidebar-menu-item">
+                        <a href="index.html" class="sidebar-menu-link active">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="projects.html" class="sidebar-menu-link">
+                            <i class="fas fa-project-diagram"></i>
+                            <span>Projects</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="messages.html" class="sidebar-menu-link">
+                            <i class="fas fa-envelope"></i>
+                            <span>Messages</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="feedback.html" class="sidebar-menu-link">
+                            <i class="fas fa-comments"></i>
+                            <span>Feedback</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-details">
+                        <div class="user-name" id="adminName">Admin</div>
+                        <div class="user-role">Administrator</div>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+        
+        <!-- Backdrop for mobile -->
+        <div class="admin-sidebar-backdrop" id="sidebarBackdrop"></div>
+        
+        <!-- Header -->
+        <header class="admin-header">
+            <div class="header-left">
+                <div class="toggle-sidebar" id="toggleSidebar">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <h1 class="page-title">Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <div class="header-action" title="View Website" onclick="window.open('../index.html', '_blank')">
+                    <i class="fas fa-external-link-alt"></i>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="admin-main">
+            <div class="dashboard-stats" id="statsCards">
+                <!-- Stats will be loaded dynamically -->
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">Loading...</div>
+                        <div class="stat-label">Total Projects</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">Loading...</div>
+                        <div class="stat-label">Active Projects</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">Loading...</div>
+                        <div class="stat-label">Messages</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon red">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">Loading...</div>
+                        <div class="stat-label">Feedback</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="admin-row">
+                <div class="admin-col-8">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h2 class="admin-card-title">Projects by Category</h2>
+                        </div>
+                        <div class="admin-card-body">
+                            <canvas id="projectsChart" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="admin-col-4">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h2 class="admin-card-title">Average Rating</h2>
+                        </div>
+                        <div class="admin-card-body text-center">
+                            <canvas id="ratingChart" height="200"></canvas>
+                            <div class="rating-value" id="avgRating">0.0</div>
+                            <div class="rating-label">Overall Rating</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h2 class="admin-card-title">Recent Messages</h2>
+                    <div class="admin-card-actions">
+                        <a href="messages.html" class="btn btn-outline btn-sm">View All</a>
+                    </div>
+                </div>
+                <div class="admin-table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Subject</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentMessages">
+                            <tr>
+                                <td colspan="5" class="text-center">Loading recent messages...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="../js/admin-common.js"></script>
+    <script src="../js/admin-dashboard.js"></script>
+</body>
+</html>

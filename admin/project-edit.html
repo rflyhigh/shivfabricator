@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Project - Shiva Fabrications</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="sidebar-header">
+                <img src="https://bashify.io/img/83d634b9fbf24719568b37ab2e2e00d9" alt="Shiva Fabrications Logo" class="sidebar-logo">
+                <div class="sidebar-title">Shiva Admin</div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="sidebar-nav-title">MAIN MENU</div>
+                <ul class="sidebar-menu">
+                    <li class="sidebar-menu-item">
+                        <a href="index.html" class="sidebar-menu-link">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="projects.html" class="sidebar-menu-link active">
+                            <i class="fas fa-project-diagram"></i>
+                            <span>Projects</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="messages.html" class="sidebar-menu-link">
+                            <i class="fas fa-envelope"></i>
+                            <span>Messages</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="feedback.html" class="sidebar-menu-link">
+                            <i class="fas fa-comments"></i>
+                            <span>Feedback</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-details">
+                        <div class="user-name" id="adminName">Admin</div>
+                        <div class="user-role">Administrator</div>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+        
+        <!-- Backdrop for mobile -->
+        <div class="admin-sidebar-backdrop" id="sidebarBackdrop"></div>
+        
+        <!-- Header -->
+        <header class="admin-header">
+            <div class="header-left">
+                <div class="toggle-sidebar" id="toggleSidebar">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <h1 class="page-title" id="projectTitle">New Project</h1>
+            </div>
+            <div class="header-right">
+                <a href="projects.html" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left"></i> Back to Projects
+                </a>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="admin-main">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h2 class="admin-card-title" id="formTitle">Create New Project</h2>
+                </div>
+                <div class="admin-card-body">
+                    <form id="projectForm" class="admin-form">
+                        <input type="hidden" id="projectId">
+                        
+                        <div class="admin-form-row">
+                            <div class="admin-form-group">
+                                <label for="title">Project Title*</label>
+                                <input type="text" id="title" name="title" class="admin-form-control" required>
+                            </div>
+                            <div class="admin-form-group">
+                                <label for="slug">Project Slug*</label>
+                                <input type="text" id="slug" name="slug" class="admin-form-control" required>
+                                <div class="admin-form-help">URL friendly name (e.g. jelly-chocolate-plant)</div>
+                            </div>
+                        </div>
+                        
+                        <div class="admin-form-row">
+                            <div class="admin-form-group">
+                                <label for="category">Category*</label>
+                                <input type="text" id="category" name="category" class="admin-form-control" required>
+                                <div class="admin-form-help">e.g. Food Plant, Dairy Plant, Piping Solution</div>
+                            </div>
+                            <div class="admin-form-group">
+                                <label for="location">Location*</label>
+                                <input type="text" id="location" name="location" class="admin-form-control" required>
+                            </div>
+                            <div class="admin-form-group">
+                                <label for="completed_year">Completed Year*</label>
+                                <input type="text" id="completed_year" name="completed_year" class="admin-form-control" required>
+                            </div>
+                        </div>
+                        
+                        <div class="admin-form-group">
+                            <label for="overview">Project Overview*</label>
+                            <textarea id="overview" name="overview" class="admin-form-control admin-form-textarea" required></textarea>
+                        </div>
+                        
+                        <div class="admin-form-group">
+                            <label>Scope of Work*</label>
+                            <div class="dynamic-field-list" id="scopeList">
+                                <div class="dynamic-field-item">
+                                    <input type="text" class="admin-form-control scope-item" placeholder="Enter scope item...">
+                                    <button type="button" class="dynamic-field-remove">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <button type="button" class="dynamic-field-add" id="addScope">
+                                <i class="fas fa-plus-circle"></i> Add Scope Item
+                            </button>
+                        </div>
+                        
+                        <div class="admin-form-group">
+                            <label>Challenges & Solutions*</label>
+                            <div id="challengesList">
+                                <div class="challenge-solution-pair">
+                                    <div class="challenge-solution-header">
+                                        <div class="challenge-solution-title">Challenge & Solution #1</div>
+                                        <button type="button" class="dynamic-field-remove">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    <div class="admin-form-group">
+                                        <label>Challenge</label>
+                                        <input type="text" class="admin-form-control challenge-item" placeholder="Describe the challenge...">
+                                    </div>
+                                    <div class="admin-form-group">
+                                        <label>Solution</label>
+                                        <textarea class="admin-form-control solution-item" placeholder="Describe the solution..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="dynamic-field-add" id="addChallenge">
+                                <i class="fas fa-plus-circle"></i> Add Challenge & Solution
+                            </button>
+                        </div>
+                        
+                        <div class="admin-form-group">
+                            <label>Results & Benefits*</label>
+                            <div class="dynamic-field-list" id="resultsList">
+                                <div class="dynamic-field-item">
+                                    <input type="text" class="admin-form-control result-item" placeholder="Enter result or benefit...">
+                                    <button type="button" class="dynamic-field-remove">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <button type="button" class="dynamic-field-add" id="addResult">
+                                <i class="fas fa-plus-circle"></i> Add Result
+                            </button>
+                        </div>
+                        
+                        <div class="admin-form-group">
+                            <label>Project Images</label>
+                            <div class="drop-zone" id="imageDropZone">
+                                <div class="drop-zone-prompt">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <span>Drop files here or click to upload</span>
+                                </div>
+                                <input type="file" id="imageUpload" class="drop-zone-input" accept="image/*" multiple>
+                            </div>
+                            <div class="admin-form-help">You can upload multiple images. Recommended size: 800x600px.</div>
+                            <div class="image-preview" id="imagePreview"></div>
+                        </div>
+                        
+                        <div class="admin-form-row">
+                            <div class="admin-form-group">
+                                <div class="admin-form-checkbox">
+                                    <input type="checkbox" id="active" name="active" checked>
+                                    <label for="active">Active (visible on website)</label>
+                                </div>
+                            </div>
+                            <div class="admin-form-group">
+                                <div class="admin-form-checkbox">
+                                    <input type="checkbox" id="enable_feedback" name="enable_feedback" checked>
+                                    <label for="enable_feedback">Enable feedback for this project</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="admin-form-buttons">
+                            <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="saveBtn">Save Project</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Slug Check Modal -->
+    <div class="modal-backdrop" id="slugCheckModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2 class="modal-title">Slug Already Exists</h2>
+                <button class="modal-close" id="closeSlugModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>The slug you entered is already in use. Please choose a different slug for your project.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="confirmSlugBtn">OK</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../js/admin-common.js"></script>
+    <script src="../js/admin-project-edit.js"></script>
+</body>
+</html>
