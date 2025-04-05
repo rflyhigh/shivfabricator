@@ -1710,3 +1710,384 @@
         font-size: 1.8rem;
     }
 }
+/* Complete mobile layout fix */
+
+/* Fix sidebar display */
+@media (max-width: 1199.98px) {
+    .admin-layout {
+        display: block; /* Change from grid to block */
+    }
+    
+    .admin-sidebar {
+        position: fixed;
+        left: -100%;
+        top: 0;
+        height: 100%;
+        z-index: 1000;
+        transition: left 0.3s ease;
+        width: 80%;
+        max-width: 280px;
+    }
+    
+    .admin-sidebar.active {
+        left: 0;
+    }
+    
+    .admin-header, .admin-main {
+        width: 100%;
+        margin-left: 0;
+    }
+    
+    .admin-sidebar-backdrop.active {
+        display: block;
+        z-index: 999;
+    }
+}
+
+/* Fix table display for mobile */
+@media (max-width: 767.98px) {
+    .admin-table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+    }
+    
+    .admin-table th, .admin-table td {
+        white-space: nowrap;
+        min-width: 100px;
+    }
+    
+    .admin-table th:first-child, .admin-table td:first-child {
+        position: sticky;
+        left: 0;
+        background-color: var(--card-bg);
+        z-index: 1;
+    }
+    
+    /* Fix header display */
+    .admin-header {
+        flex-wrap: wrap;
+        height: auto;
+        min-height: var(--admin-header-height);
+        padding: 10px 15px;
+    }
+    
+    .header-left, .header-right {
+        width: 100%;
+    }
+    
+    .header-right {
+        margin-top: 10px;
+        justify-content: flex-start;
+    }
+    
+    /* Fix filter group display */
+    .admin-filter-group {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+    }
+    
+    .admin-filter-group select,
+    .admin-search input {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .admin-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .admin-card-actions {
+        margin-top: 10px;
+        width: 100%;
+    }
+}
+
+/* Fix dashboard stats cards */
+@media (max-width: 767.98px) {
+    .dashboard-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .stat-card {
+        width: 100%;
+    }
+}
+
+/* Fix chart display */
+canvas#projectsChart, canvas#ratingChart {
+    height: 300px !important;
+    max-height: 300px !important;
+    width: 100% !important;
+}
+
+/* Fix admin card padding for mobile */
+@media (max-width: 575.98px) {
+    .admin-card {
+        padding: 15px 10px;
+        margin-bottom: 15px;
+    }
+}
+
+/* Fix loading spinner display */
+.stat-icon .fa-spinner {
+    display: inline-block;
+}
+
+/* Fix action buttons */
+.actions {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 5px;
+}
+
+/* Fix pagination for mobile */
+@media (max-width: 575.98px) {
+    .admin-pagination {
+        gap: 5px;
+    }
+    
+    .pagination-item {
+        width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+    }
+}
+
+/* Fix modal display for mobile */
+@media (max-width: 575.98px) {
+    .modal-container {
+        width: 95%;
+        max-height: 80vh;
+    }
+    
+    .modal-header, .modal-body, .modal-footer {
+        padding: 15px 10px;
+    }
+}
+
+/* Fix mobile toggle sidebar button */
+.toggle-sidebar {
+    display: block;
+    margin-right: 15px;
+    font-size: 1.5rem;
+}
+
+/* Fix main content area */
+.admin-main {
+    padding: 15px;
+    overflow-x: hidden;
+}
+
+/* Fix search input on mobile */
+.admin-search {
+    width: 100%;
+}
+
+.admin-search input {
+    width: 100%;
+}
+
+/* Fix row and column layout */
+@media (max-width: 767.98px) {
+    .admin-row {
+        margin: 0;
+    }
+    
+    .admin-col-4, .admin-col-6, .admin-col-8, .admin-col-12 {
+        padding: 0;
+        margin-bottom: 15px;
+    }
+}
+
+/* Fix button display on mobile */
+@media (max-width: 575.98px) {
+    .btn {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+    }
+    
+    .btn-sm {
+        padding: 5px 10px;
+        font-size: 0.8rem;
+    }
+}
+
+/* Fix form fields on mobile */
+@media (max-width: 575.98px) {
+    .admin-form-group {
+        margin-bottom: 15px;
+    }
+    
+    .admin-form-control {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Fix loading state display */
+.loading-spinner, .fa-spinner {
+    display: inline-block !important;
+}
+
+/* Fix table header and data alignment */
+.admin-table th, .admin-table td {
+    vertical-align: middle;
+}
+
+/* Fix mobile sidebar scrolling */
+.admin-sidebar {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Fix project edit form on mobile */
+@media (max-width: 575.98px) {
+    .dynamic-field-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .dynamic-field-remove {
+        align-self: flex-end;
+        margin-top: -40px;
+    }
+    
+    .challenge-solution-pair {
+        padding: 15px 10px;
+    }
+}
+
+/* Ensure modals are properly centered */
+.modal-backdrop {
+    padding: 10px;
+}
+
+/* Fix admin form buttons */
+@media (max-width: 575.98px) {
+    .admin-form-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .admin-form-buttons .btn {
+        width: 100%;
+    }
+}
+/* Fix for dropdown select elements */
+select.admin-form-select, 
+select#categoryFilter,
+select#projectFilter,
+select#statusFilter {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: #fff;
+    color: #333;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 8px 30px 8px 10px;
+    width: 100%;
+    font-size: 14px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23333' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: calc(100% - 10px) center;
+    background-size: 12px;
+    cursor: pointer;
+}
+
+/* Fix for Feedback Management dropdown layout */
+@media (max-width: 767.98px) {
+    .header-right .admin-filter-group {
+        width: 100%;
+    }
+    
+    select#projectFilter,
+    select#statusFilter {
+        margin-bottom: 10px;
+    }
+}
+
+/* Ensure dropdown arrows display correctly */
+select.admin-form-select::-ms-expand,
+select#categoryFilter::-ms-expand,
+select#projectFilter::-ms-expand,
+select#statusFilter::-ms-expand {
+    display: none;
+}
+
+/* Fix dropdown hover state */
+select.admin-form-select:hover,
+select#categoryFilter:hover,
+select#projectFilter:hover,
+select#statusFilter:hover {
+    border-color: #999;
+}
+
+/* Fix dropdown focus state */
+select.admin-form-select:focus,
+select#categoryFilter:focus,
+select#projectFilter:focus,
+select#statusFilter:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+/* Dark theme dropdown styles */
+.admin-layout select.admin-form-select,
+.admin-layout select#categoryFilter,
+.admin-layout select#projectFilter,
+.admin-layout select#statusFilter {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23ccc' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+}
+
+/* Fix for Feedback Management page specific layout */
+@media (max-width: 767.98px) {
+    .admin-header .admin-filter-group {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .admin-header .admin-filter-group select {
+        margin-bottom: 10px;
+    }
+}
+
+/* Better mobile spacing for filters */
+@media (max-width: 575.98px) {
+    select.admin-form-select,
+    select#categoryFilter,
+    select#projectFilter,
+    select#statusFilter {
+        padding: 10px 30px 10px 12px;
+        font-size: 14px;
+    }
+    
+    /* Fix for "All Categories" dropdown */
+    .admin-card-actions select#categoryFilter {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
+
+/* Improve dropdown rendering in Firefox */
+@-moz-document url-prefix() {
+    select.admin-form-select,
+    select#categoryFilter,
+    select#projectFilter,
+    select#statusFilter {
+        text-indent: 0.01px;
+        text-overflow: '';
+        padding-right: 30px;
+    }
+}
