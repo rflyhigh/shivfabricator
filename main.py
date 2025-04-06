@@ -384,9 +384,11 @@ def get_feedback_url(code):
 
 def get_bill_url(bill_code):
     return f"{BASE_URL}/bill?code={bill_code}"
-
 def generate_bill_pdf(bill: BillInDB):
     buffer = BytesIO()
+    
+    # Register fonts for rupee symbol support
+    pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
     
     # Create PDF with better styling
     c = canvas.Canvas(buffer, pagesize=letter)
@@ -395,18 +397,18 @@ def generate_bill_pdf(bill: BillInDB):
     # Set up some constants
     margin = 50
     col_width = width - 2 * margin
-    line_height = 14
     
     # Add a light blue header
-    c.setFillColorRGB(0.95, 0.95, 0.95)  # Very light gray
+    c.setFillColorRGB(0.95, 0.98, 1)  # Very light blue
     c.rect(0, height - 120, width, 120, fill=True, stroke=False)
     
     # Company Logo (if available) or Name
-    c.setFillColorRGB(0, 0, 0)  # Black text
+    c.setFillColorRGB(0, 0, 0.5)  # Dark blue
     c.setFont("Helvetica-Bold", 22)
     c.drawString(margin, height - 50, "SHIVA FABRICATION")
     
     # Company details with better formatting
+    c.setFillColorRGB(0, 0, 0)  # Black text
     c.setFont("Helvetica", 9)
     c.drawString(margin, height - 65, "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015")
     c.drawString(margin, height - 78, "Contact: 8805954132 / 9096553951")
@@ -471,12 +473,9 @@ def generate_bill_pdf(bill: BillInDB):
     # Items Table
     y_position = min(y_position, details_y) - 30
     
-    # Table header
-    c.setFillColorRGB(0.95, 0.95, 0.95)  # Very light gray
+    # Table header with light blue background
+    c.setFillColorRGB(0.9, 0.95, 1)  # Light blue
     c.rect(margin, y_position - 15, width - 2 * margin, 20, fill=True, stroke=False)
-    
-    c.setFillColorRGB(0, 0, 0)  # Black
-    c.setFont("Helvetica-Bold", 9)
     
     # Define column widths (as percentages of available width)
     col_widths = [0.07, 0.13, 0.4, 0.08, 0.08, 0.12, 0.12]
@@ -485,109 +484,107 @@ def generate_bill_pdf(bill: BillInDB):
     for i in range(len(col_widths)):
         col_positions.append(col_positions[-1] + col_widths[i] * col_width)
     
-    # Draw table headers
+    # Draw table headers - black text
+    c.setFillColorRGB(0, 0, 0)  # Black
+    c.setFont("Helvetica-Bold", 9)
+    
     headers = ["Sr.No.", "HSN/SAC", "Description", "Qty", "Unit", "Rate", "Amount"]
     for i, header in enumerate(headers):
         c.drawString(col_positions[i] + 3, y_position - 10, header)
-        
-    # Draw header line
+    
+    # Draw header border
+    c.setStrokeColorRGB(0.8, 0.8, 0.8)  # Light gray
     c.setLineWidth(0.5)
     c.line(margin, y_position - 15, width - margin, y_position - 15)
     c.line(margin, y_position + 5, width - margin, y_position + 5)
+    
+    # Draw vertical lines
+    for pos in col_positions:
+        c.line(pos, y_position - 15, pos, y_position + 5)
+    c.line(width - margin, y_position - 15, width - margin, y_position + 5)
     
     # Draw table items
     y_position -= 30
     c.setFont("Helvetica", 9)
     
+    row_height = 20
     for item in bill.items:
+        row_top = y_position + row_height/2
+        row_bottom = y_position - row_height/2
+        
         # Draw item details
         c.drawString(col_positions[0] + 3, y_position, str(item.sr_no))
         c.drawString(col_positions[1] + 3, y_position, item.hsn_code or "-")
         
-        # Handle long descriptions - wrap text
-        description_words = item.description.split()
-        description_line = ""
-        description_y = y_position
+        # Description
+        c.drawString(col_positions[2] + 3, y_position, item.description)
         
-        for word in description_words:
-            test_line = description_line + " " + word if description_line else word
-            if c.stringWidth(test_line, "Helvetica", 9) < (col_widths[2] * col_width - 6):
-                description_line = test_line
-            else:
-                c.drawString(col_positions[2] + 3, description_y, description_line)
-                description_y -= 12
-                description_line = word
-        
-        # Draw the last line of description
-        if description_line:
-            c.drawString(col_positions[2] + 3, description_y, description_line)
-        
-        # Continue with other columns
+        # Qty and Unit
         c.drawString(col_positions[3] + 3, y_position, item.qty or "-")
         c.drawString(col_positions[4] + 3, y_position, item.unit or "-")
         
+        # Rate and Amount - using normal text, not symbols
+        c.setFont("Helvetica", 9)
+        
         # Right-align the rate and amount
-        rate_text = f"₹{item.rate:,.2f}"
-        amount_text = f"₹{item.amount:,.2f}"
+        rate_text = f"₹ {item.rate:,.2f}".replace("₹", "Rs.")
+        amount_text = f"₹ {item.amount:,.2f}".replace("₹", "Rs.")
         
         rate_width = c.stringWidth(rate_text, "Helvetica", 9)
         amount_width = c.stringWidth(amount_text, "Helvetica", 9)
         
-        c.drawString(col_positions[6] - amount_width - 3, y_position, amount_text)
-        c.drawString(col_positions[5] - rate_width - 3, y_position, rate_text)
+        c.drawRightString(col_positions[6] + col_widths[6] * col_width - 3, y_position, amount_text)
+        c.drawRightString(col_positions[5] + col_widths[5] * col_width - 3, y_position, rate_text)
+        
+        # Draw horizontal line below the row
+        c.line(margin, row_bottom, width - margin, row_bottom)
         
         # Draw vertical lines for the row
         for pos in col_positions:
-            c.line(pos, y_position - 15, pos, y_position + 15)
-        c.line(width - margin, y_position - 15, width - margin, y_position + 15)
-        
-        # Draw horizontal line below the row
-        c.line(margin, y_position - 15, width - margin, y_position - 15)
+            c.line(pos, row_bottom, pos, row_top)
+        c.line(width - margin, row_bottom, width - margin, row_top)
         
         # Move to next row
-        y_position -= max(30, description_y - y_position + 30)  # Adjust height based on description length
-    
-    # Draw the table bottom line
-    c.line(margin, y_position, width - margin, y_position)
+        y_position -= row_height
     
     # Totals section
-    y_position -= 30
+    y_position -= 20
     
     # Sub Total
-    c.setFont("Helvetica", 9)
-    sub_total_text = f"₹{bill.sub_total:,.2f}"
-    sub_total_width = c.stringWidth(sub_total_text, "Helvetica", 9)
-    c.drawString(col_positions[5] - 3, y_position, "Sub Total:")
-    c.drawString(width - margin - sub_total_width - 3, y_position, sub_total_text)
+    c.setFont("Helvetica-Bold", 9)
+    c.drawString(col_positions[5], y_position, "Sub Total:")
+    sub_total_text = f"Rs. {bill.sub_total:,.2f}"
+    c.drawRightString(width - margin - 3, y_position, sub_total_text)
     
     y_position -= 15
     
     # GST if applicable
     if bill.gst:
-        gst_text = f"₹{bill.gst:,.2f}"
-        gst_width = c.stringWidth(gst_text, "Helvetica", 9)
-        c.drawString(col_positions[5] - 3, y_position, "GST:")
-        c.drawString(width - margin - gst_width - 3, y_position, gst_text)
+        c.drawString(col_positions[5], y_position, "GST:")
+        gst_text = f"Rs. {bill.gst:,.2f}"
+        c.drawRightString(width - margin - 3, y_position, gst_text)
         y_position -= 15
     
     # Round off if applicable
     if bill.round_off:
-        round_off_text = f"₹{bill.round_off:,.2f}"
-        round_off_width = c.stringWidth(round_off_text, "Helvetica", 9)
-        c.drawString(col_positions[5] - 3, y_position, "Round Off:")
-        c.drawString(width - margin - round_off_width - 3, y_position, round_off_text)
+        c.drawString(col_positions[5], y_position, "Round Off:")
+        round_off_text = f"Rs. {bill.round_off:,.2f}"
+        c.drawRightString(width - margin - 3, y_position, round_off_text)
         y_position -= 15
     
-    # Grand Total
+    # Grand Total with light blue background
+    c.setFillColorRGB(0.9, 0.95, 1)  # Light blue
+    c.rect(col_positions[5] - 5, y_position - 5, width - margin - col_positions[5] + 5, 20, fill=True, stroke=False)
+    
+    c.setFillColorRGB(0, 0, 0)  # Black text
     c.setFont("Helvetica-Bold", 10)
-    total_text = f"₹{bill.grand_total:,.2f}"
-    total_width = c.stringWidth(total_text, "Helvetica-Bold", 10)
-    c.drawString(col_positions[5] - 3, y_position, "Grand Total:")
-    c.drawString(width - margin - total_width - 3, y_position, total_text)
+    c.drawString(col_positions[5], y_position, "Grand Total:")
+    total_text = f"Rs. {bill.grand_total:,.2f}"
+    c.drawRightString(width - margin - 3, y_position, total_text)
     
     # Draw a line above the grand total
     c.setLineWidth(0.5)
-    c.line(col_positions[5] - 10, y_position + 5, width - margin, y_position + 5)
+    c.line(col_positions[5] - 5, y_position + 15, width - margin, y_position + 15)
     
     # Amount in words
     y_position -= 30
@@ -596,17 +593,21 @@ def generate_bill_pdf(bill: BillInDB):
     c.setFont("Helvetica-Oblique", 9)
     c.drawString(margin + 100, y_position, bill.amount_in_words)
     
-    # Bank details
+    # Bank details section with light background
     y_position -= 30
+    c.setFillColorRGB(0.95, 0.95, 0.95)  # Very light gray
+    c.rect(margin, y_position - 40, width - 2 * margin, 50, fill=True, stroke=False)
+    
+    c.setFillColorRGB(0, 0, 0)  # Black text
     c.setFont("Helvetica-Bold", 9)
-    c.drawString(margin, y_position, "Bank Details:")
+    c.drawString(margin + 5, y_position, "Bank Details:")
     c.setFont("Helvetica", 9)
     y_position -= 15
-    c.drawString(margin, y_position, "Name of the Beneficiary: SHIVA FABRICATION")
+    c.drawString(margin + 5, y_position, "Name of the Beneficiary: SHIVA FABRICATION")
     y_position -= 12
-    c.drawString(margin, y_position, "A/C NO. 110504180001097")
+    c.drawString(margin + 5, y_position, "A/C NO. 110504180001097")
     y_position -= 12
-    c.drawString(margin, y_position, "IFSC CODE: SVCB0000105")
+    c.drawString(margin + 5, y_position, "IFSC CODE: SVCB0000105")
     
     # Declaration
     y_position -= 30
@@ -619,9 +620,14 @@ def generate_bill_pdf(bill: BillInDB):
     # Signatures
     y_position -= 50
     
+    # Thin line above signatures
+    c.setStrokeColorRGB(0.8, 0.8, 0.8)  # Light gray
+    c.line(margin, y_position + 10, width - margin, y_position + 10)
+    
     # Customer signature on left
     c.setFont("Helvetica-Bold", 9)
     c.drawString(margin + 30, y_position, "Customer Seal and Signature")
+    c.setStrokeColorRGB(0.5, 0.5, 0.5)  # Gray
     c.line(margin, y_position - 30, margin + 200, y_position - 30)
     
     # Company signature on right
@@ -639,28 +645,13 @@ def generate_bill_pdf(bill: BillInDB):
     
     # Add a footer with page number
     c.setFont("Helvetica", 8)
-    c.drawString(width/2 - 40, 30, "Thank you for your business!")
-    c.drawString(width - margin - 100, 20, "Page 1 of 1")
+    c.setFillColorRGB(0.5, 0.5, 0.5)  # Gray
+    c.drawString(width/2 - 70, 20, "Thank you for your business!")
+    c.drawString(width - margin - 60, 20, "Page 1 of 1")
     
     c.save()
     buffer.seek(0)
     return buffer
-
-# API routes
-@app.post("/api/token", response_model=Token)
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = await authenticate_user(form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/api/health", response_model=HealthCheck)
 async def health_check():
