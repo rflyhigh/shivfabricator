@@ -1,4 +1,37 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Theme Toggle - Check for saved theme before any other operations
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    
+    // Create theme toggle button
+    const themeToggle = document.createElement('button');
+    themeToggle.className = 'theme-toggle';
+    themeToggle.innerHTML = savedTheme === 'light' ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+    themeToggle.setAttribute('aria-label', 'Toggle theme');
+    themeToggle.setAttribute('title', savedTheme === 'light' ? 'Switch to dark theme' : 'Switch to light theme');
+    document.body.appendChild(themeToggle);
+    
+    // Handle theme toggle
+    themeToggle.addEventListener('click', function() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        // Update icon and title
+        this.innerHTML = newTheme === 'light' ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+        this.setAttribute('title', newTheme === 'light' ? 'Switch to dark theme' : 'Switch to light theme');
+        
+        // Apply theme
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        // Show toast notification
+        showToast(
+            newTheme === 'light' ? 'Light Theme Activated' : 'Dark Theme Activated', 
+            `You've switched to ${newTheme} mode.`, 
+            'info'
+        );
+    });
+
     // Add loading animation
     const loader = document.createElement('div');
     loader.className = 'loader';
@@ -41,24 +74,64 @@ document.addEventListener('DOMContentLoaded', function() {
     const body = document.body;
 
     if (hamburger) {
+        // Add close button to mobile nav
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'mobile-nav-close';
+        closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+        closeBtn.setAttribute('aria-label', 'Close menu');
+        
+        // Only add the close button if it doesn't already exist
+        if (!navLinks.querySelector('.mobile-nav-close')) {
+            navLinks.insertBefore(closeBtn, navLinks.firstChild);
+        }
+        
+        // Handle hamburger click
         hamburger.addEventListener('click', function() {
             hamburger.classList.toggle('active');
             navLinks.classList.toggle('active');
             body.classList.toggle('no-scroll');
+            
+            // If sidebar is opening, add overlay
+            if (navLinks.classList.contains('active')) {
+                const overlay = document.createElement('div');
+                overlay.className = 'mobile-nav-overlay';
+                document.body.appendChild(overlay);
+                
+                // Close menu when clicking on overlay
+                overlay.addEventListener('click', closeMobileMenu);
+            } else {
+                // Remove overlay when closing
+                const overlay = document.querySelector('.mobile-nav-overlay');
+                if (overlay) overlay.remove();
+            }
         });
+        
+        // Close button functionality
+        closeBtn.addEventListener('click', closeMobileMenu);
     }
-
+    
     // Close mobile nav when clicking on a nav link
     const navItems = document.querySelectorAll('.nav-links a');
     navItems.forEach(item => {
-        item.addEventListener('click', function() {
-            if (hamburger.classList.contains('active')) {
-                hamburger.classList.remove('active');
-                navLinks.classList.remove('active');
-                body.classList.remove('no-scroll');
-            }
-        });
+        item.addEventListener('click', closeMobileMenu);
     });
+    
+    // Function to close mobile menu
+    function closeMobileMenu() {
+        const hamburger = document.querySelector('.hamburger');
+        const navLinks = document.querySelector('.nav-links');
+        const body = document.body;
+        const overlay = document.querySelector('.mobile-nav-overlay');
+        
+        if (hamburger && hamburger.classList.contains('active')) {
+            hamburger.classList.remove('active');
+            navLinks.classList.remove('active');
+            body.classList.remove('no-scroll');
+            
+            // Remove overlay
+            if (overlay) overlay.remove();
+        }
+    }
 
     // Project Filtering
     const filterBtns = document.querySelectorAll('.filter-btn');

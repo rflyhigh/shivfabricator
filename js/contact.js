@@ -64,22 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // FAQ functionality
-    const faqItems = document.querySelectorAll('.faq-item');
-    faqItems.forEach(item => {
-        const question = item.querySelector('.faq-question');
-        question.addEventListener('click', function() {
-            // Toggle active class for current item
-            item.classList.toggle('active');
-            
-            // Close other items
-            faqItems.forEach(otherItem => {
-                if (otherItem !== item) {
-                    otherItem.classList.remove('active');
-                }
-            });
-        });
-    });
+    // REMOVED FAQ functionality - this is now handled by script.js
     
     // Toast notification function
     function showToast(title, message, type = 'info') {
