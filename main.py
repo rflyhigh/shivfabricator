@@ -384,272 +384,214 @@ def get_feedback_url(code):
 
 def get_bill_url(bill_code):
     return f"{BASE_URL}/bill?code={bill_code}"
+
 def generate_bill_pdf(bill: BillInDB):
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    
     buffer = BytesIO()
     
-    # Register fonts for rupee symbol support
-    pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
+    # Create PDF document
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=0.5*inch,
+        leftMargin=0.5*inch,
+        topMargin=0.5*inch,
+        bottomMargin=0.5*inch
+    )
     
-    # Create PDF with better styling
-    c = canvas.Canvas(buffer, pagesize=letter)
-    width, height = letter
+    # Styles
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(
+        name='RightAlign',
+        parent=styles['Normal'],
+        alignment=2  # right alignment
+    ))
     
-    # Set up some constants
-    margin = 50
-    col_width = width - 2 * margin
+    # Container for the 'Flowable' objects
+    elements = []
     
-    # Add a light blue header
-    c.setFillColorRGB(0.95, 0.98, 1)  # Very light blue
-    c.rect(0, height - 120, width, 120, fill=True, stroke=False)
+    # Company and Invoice Header
+    company_data = [
+        [Paragraph("<font size='16'><b>SHIVA FABRICATION</b></font>", styles['Normal']), 
+         Paragraph("<font size='16' color='#00C6FF'><b>INVOICE</b></font>", styles['RightAlign'])],
+        [Paragraph("Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015", styles['Normal']), 
+         Paragraph(f"<b>Invoice No:</b> {bill.invoice_no}", styles['RightAlign'])],
+        [Paragraph("Contact: 8805954132 / 9096553951", styles['Normal']), 
+         Paragraph(f"<b>Date:</b> {bill.date}", styles['RightAlign'])],
+        [Paragraph("Email: shivfabricator1@gmail.com", styles['Normal']), ""]
+    ]
     
-    # Company Logo (if available) or Name
-    c.setFillColorRGB(0, 0, 0.5)  # Dark blue
-    c.setFont("Helvetica-Bold", 22)
-    c.drawString(margin, height - 50, "SHIVA FABRICATION")
+    header_table = Table(company_data, colWidths=[4*inch, 3*inch])
+    header_table.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+    ]))
     
-    # Company details with better formatting
-    c.setFillColorRGB(0, 0, 0)  # Black text
-    c.setFont("Helvetica", 9)
-    c.drawString(margin, height - 65, "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015")
-    c.drawString(margin, height - 78, "Contact: 8805954132 / 9096553951")
-    c.drawString(margin, height - 91, "Email: shivfabricator1@gmail.com")
+    elements.append(header_table)
+    elements.append(Spacer(1, 0.2*inch))
     
-    # Invoice title
-    c.setFont("Helvetica-Bold", 18)
-    c.setFillColorRGB(0, 0.78, 1)  # Primary blue color
-    invoice_text = "INVOICE"
-    invoice_width = c.stringWidth(invoice_text, "Helvetica-Bold", 18)
-    c.drawString(width - margin - invoice_width, height - 50, invoice_text)
+    # Bill To and Invoice Details Section
+    bill_to_data = [
+        [Paragraph("<b>Bill To:</b>", styles['Normal']), 
+         Paragraph("<b>Invoice Details:</b>", styles['Normal'])],
+        [Paragraph(f"<b>{bill.bill_to}</b>", styles['Normal']), ""],
+        [Paragraph(bill.bill_to_address, styles['Normal']), ""]
+    ]
     
-    # Invoice details
-    c.setFillColorRGB(0, 0, 0)  # Black text
-    c.setFont("Helvetica-Bold", 10)
-    c.drawString(width - margin - 150, height - 70, f"Invoice No: {bill.invoice_no}")
-    c.setFont("Helvetica", 10)
-    c.drawString(width - margin - 150, height - 85, f"Date: {bill.date}")
-    
-    # Thin separator line
-    c.setStrokeColorRGB(0.8, 0.8, 0.8)  # Light gray
-    c.setLineWidth(0.5)
-    c.line(margin, height - 130, width - margin, height - 130)
-    
-    # Bill To section
-    y_position = height - 150
-    c.setFont("Helvetica-Bold", 11)
-    c.drawString(margin, y_position, "Bill To:")
-    c.setFont("Helvetica-Bold", 10)
-    y_position -= 15
-    c.drawString(margin, y_position, bill.bill_to)
-    c.setFont("Helvetica", 9)
-    
-    # Handle multiline addresses
-    address_lines = bill.bill_to_address.split(', ')
-    for line in address_lines:
-        y_position -= 12
-        c.drawString(margin, y_position, line)
-    
-    # Invoice details on right side
-    details_y = height - 150
-    c.setFont("Helvetica-Bold", 11)
-    c.drawString(width - margin - 200, details_y, "Invoice Details:")
-    c.setFont("Helvetica", 9)
-    
-    details_y -= 15
+    # Add invoice details if available
+    details_row = 1
     if bill.company_pan:
-        c.drawString(width - margin - 200, details_y, f"Company PAN: {bill.company_pan}")
-        details_y -= 12
+        bill_to_data[details_row][1] = Paragraph(f"<b>Company PAN:</b> {bill.company_pan}", styles['Normal'])
+        details_row += 1
+        if len(bill_to_data) <= details_row:
+            bill_to_data.append(["", ""])
     
     if bill.suppliers_ref_no:
-        c.drawString(width - margin - 200, details_y, f"Supplier's Ref No: {bill.suppliers_ref_no}")
-        details_y -= 12
+        bill_to_data[details_row][1] = Paragraph(f"<b>Supplier's Ref No:</b> {bill.suppliers_ref_no}", styles['Normal'])
+        details_row += 1
+        if len(bill_to_data) <= details_row:
+            bill_to_data.append(["", ""])
     
     if bill.buyers_order_no:
-        c.drawString(width - margin - 200, details_y, f"Buyer's Order No: {bill.buyers_order_no}")
-        details_y -= 12
+        bill_to_data[details_row][1] = Paragraph(f"<b>Buyer's Order No:</b> {bill.buyers_order_no}", styles['Normal'])
+        details_row += 1
+        if len(bill_to_data) <= details_row:
+            bill_to_data.append(["", ""])
     
     if bill.other_terms:
-        c.drawString(width - margin - 200, details_y, f"Other Terms: {bill.other_terms}")
+        bill_to_data[details_row][1] = Paragraph(f"<b>Other Terms:</b> {bill.other_terms}", styles['Normal'])
+    
+    bill_to_table = Table(bill_to_data, colWidths=[4*inch, 3*inch])
+    bill_to_table.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    
+    elements.append(bill_to_table)
+    elements.append(Spacer(1, 0.2*inch))
     
     # Items Table
-    y_position = min(y_position, details_y) - 30
+    items_data = [
+        ["Sr.No.", "HSN/SAC", "Description", "Qty", "Unit", "Rate", "Amount"]
+    ]
     
-    # Table header with light blue background
-    c.setFillColorRGB(0.9, 0.95, 1)  # Light blue
-    c.rect(margin, y_position - 15, width - 2 * margin, 20, fill=True, stroke=False)
-    
-    # Define column widths (as percentages of available width)
-    col_widths = [0.07, 0.13, 0.4, 0.08, 0.08, 0.12, 0.12]
-    col_positions = [margin]
-    
-    for i in range(len(col_widths)):
-        col_positions.append(col_positions[-1] + col_widths[i] * col_width)
-    
-    # Draw table headers - black text
-    c.setFillColorRGB(0, 0, 0)  # Black
-    c.setFont("Helvetica-Bold", 9)
-    
-    headers = ["Sr.No.", "HSN/SAC", "Description", "Qty", "Unit", "Rate", "Amount"]
-    for i, header in enumerate(headers):
-        c.drawString(col_positions[i] + 3, y_position - 10, header)
-    
-    # Draw header border
-    c.setStrokeColorRGB(0.8, 0.8, 0.8)  # Light gray
-    c.setLineWidth(0.5)
-    c.line(margin, y_position - 15, width - margin, y_position - 15)
-    c.line(margin, y_position + 5, width - margin, y_position + 5)
-    
-    # Draw vertical lines
-    for pos in col_positions:
-        c.line(pos, y_position - 15, pos, y_position + 5)
-    c.line(width - margin, y_position - 15, width - margin, y_position + 5)
-    
-    # Draw table items
-    y_position -= 30
-    c.setFont("Helvetica", 9)
-    
-    row_height = 20
     for item in bill.items:
-        row_top = y_position + row_height/2
-        row_bottom = y_position - row_height/2
-        
-        # Draw item details
-        c.drawString(col_positions[0] + 3, y_position, str(item.sr_no))
-        c.drawString(col_positions[1] + 3, y_position, item.hsn_code or "-")
-        
-        # Description
-        c.drawString(col_positions[2] + 3, y_position, item.description)
-        
-        # Qty and Unit
-        c.drawString(col_positions[3] + 3, y_position, item.qty or "-")
-        c.drawString(col_positions[4] + 3, y_position, item.unit or "-")
-        
-        # Rate and Amount - using normal text, not symbols
-        c.setFont("Helvetica", 9)
-        
-        # Right-align the rate and amount
-        rate_text = f"₹ {item.rate:,.2f}".replace("₹", "Rs.")
-        amount_text = f"₹ {item.amount:,.2f}".replace("₹", "Rs.")
-        
-        rate_width = c.stringWidth(rate_text, "Helvetica", 9)
-        amount_width = c.stringWidth(amount_text, "Helvetica", 9)
-        
-        c.drawRightString(col_positions[6] + col_widths[6] * col_width - 3, y_position, amount_text)
-        c.drawRightString(col_positions[5] + col_widths[5] * col_width - 3, y_position, rate_text)
-        
-        # Draw horizontal line below the row
-        c.line(margin, row_bottom, width - margin, row_bottom)
-        
-        # Draw vertical lines for the row
-        for pos in col_positions:
-            c.line(pos, row_bottom, pos, row_top)
-        c.line(width - margin, row_bottom, width - margin, row_top)
-        
-        # Move to next row
-        y_position -= row_height
+        items_data.append([
+            str(item.sr_no),
+            item.hsn_code or "-",
+            item.description,
+            item.qty or "-",
+            item.unit or "-",
+            f"Rs. {item.rate:,.2f}",
+            f"Rs. {item.amount:,.2f}"
+        ])
     
-    # Totals section
-    y_position -= 20
+    # Add subtotal, GST, round off, and grand total
+    items_data.append(["", "", "", "", "", "<b>Sub Total:</b>", f"<b>Rs. {bill.sub_total:,.2f}</b>"])
     
-    # Sub Total
-    c.setFont("Helvetica-Bold", 9)
-    c.drawString(col_positions[5], y_position, "Sub Total:")
-    sub_total_text = f"Rs. {bill.sub_total:,.2f}"
-    c.drawRightString(width - margin - 3, y_position, sub_total_text)
-    
-    y_position -= 15
-    
-    # GST if applicable
     if bill.gst:
-        c.drawString(col_positions[5], y_position, "GST:")
-        gst_text = f"Rs. {bill.gst:,.2f}"
-        c.drawRightString(width - margin - 3, y_position, gst_text)
-        y_position -= 15
+        items_data.append(["", "", "", "", "", "<b>GST:</b>", f"<b>Rs. {bill.gst:,.2f}</b>"])
     
-    # Round off if applicable
     if bill.round_off:
-        c.drawString(col_positions[5], y_position, "Round Off:")
-        round_off_text = f"Rs. {bill.round_off:,.2f}"
-        c.drawRightString(width - margin - 3, y_position, round_off_text)
-        y_position -= 15
+        items_data.append(["", "", "", "", "", "<b>Round Off:</b>", f"<b>Rs. {bill.round_off:,.2f}</b>"])
     
-    # Grand Total with light blue background
-    c.setFillColorRGB(0.9, 0.95, 1)  # Light blue
-    c.rect(col_positions[5] - 5, y_position - 5, width - margin - col_positions[5] + 5, 20, fill=True, stroke=False)
+    items_data.append(["", "", "", "", "", "<b>Grand Total:</b>", f"<b>Rs. {bill.grand_total:,.2f}</b>"])
     
-    c.setFillColorRGB(0, 0, 0)  # Black text
-    c.setFont("Helvetica-Bold", 10)
-    c.drawString(col_positions[5], y_position, "Grand Total:")
-    total_text = f"Rs. {bill.grand_total:,.2f}"
-    c.drawRightString(width - margin - 3, y_position, total_text)
+    # Convert text with HTML formatting to Paragraph objects
+    for i in range(len(items_data)):
+        for j in range(len(items_data[i])):
+            if isinstance(items_data[i][j], str) and ("<b>" in items_data[i][j] or "<i>" in items_data[i][j]):
+                if j in [5, 6]:  # Right align rate and amount columns
+                    items_data[i][j] = Paragraph(items_data[i][j], styles['RightAlign'])
+                else:
+                    items_data[i][j] = Paragraph(items_data[i][j], styles['Normal'])
     
-    # Draw a line above the grand total
-    c.setLineWidth(0.5)
-    c.line(col_positions[5] - 5, y_position + 15, width - margin, y_position + 15)
+    col_widths = [0.5*inch, 0.8*inch, 3*inch, 0.5*inch, 0.5*inch, 0.8*inch, 1*inch]
+    items_table = Table(items_data, colWidths=col_widths, repeatRows=1)
+    
+    items_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
+        ('TOPPADDING', (0, 0), (-1, 0), 6),
+        ('GRID', (0, 0), (-1, -5), 0.5, colors.grey),
+        ('ALIGN', (5, 1), (6, -1), 'RIGHT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('FONTNAME', (0, -4), (-1, -1), 'Helvetica-Bold'),
+        ('LINEBELOW', (5, -5), (6, -5), 1, colors.black),
+        ('BACKGROUND', (5, -1), (6, -1), colors.lightblue),
+    ]))
+    
+    elements.append(items_table)
+    elements.append(Spacer(1, 0.2*inch))
     
     # Amount in words
-    y_position -= 30
-    c.setFont("Helvetica-Bold", 9)
-    c.drawString(margin, y_position, "Amount in words:")
-    c.setFont("Helvetica-Oblique", 9)
-    c.drawString(margin + 100, y_position, bill.amount_in_words)
+    elements.append(Paragraph(f"<b>Amount in words:</b> <i>{bill.amount_in_words}</i>", styles['Normal']))
+    elements.append(Spacer(1, 0.2*inch))
     
-    # Bank details section with light background
-    y_position -= 30
-    c.setFillColorRGB(0.95, 0.95, 0.95)  # Very light gray
-    c.rect(margin, y_position - 40, width - 2 * margin, 50, fill=True, stroke=False)
+    # Bank Details
+    bank_data = [
+        [Paragraph("<b>Bank Details:</b>", styles['Normal'])],
+        [Paragraph("Name of the Beneficiary: SHIVA FABRICATION", styles['Normal'])],
+        [Paragraph("A/C NO. 110504180001097", styles['Normal'])],
+        [Paragraph("IFSC CODE: SVCB0000105", styles['Normal'])]
+    ]
     
-    c.setFillColorRGB(0, 0, 0)  # Black text
-    c.setFont("Helvetica-Bold", 9)
-    c.drawString(margin + 5, y_position, "Bank Details:")
-    c.setFont("Helvetica", 9)
-    y_position -= 15
-    c.drawString(margin + 5, y_position, "Name of the Beneficiary: SHIVA FABRICATION")
-    y_position -= 12
-    c.drawString(margin + 5, y_position, "A/C NO. 110504180001097")
-    y_position -= 12
-    c.drawString(margin + 5, y_position, "IFSC CODE: SVCB0000105")
+    bank_table = Table(bank_data, colWidths=[7.2*inch])
+    bank_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.lightgrey),
+        ('BOX', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    
+    elements.append(bank_table)
+    elements.append(Spacer(1, 0.1*inch))
     
     # Declaration
-    y_position -= 30
-    c.setFont("Helvetica-Bold", 9)
-    c.drawString(margin, y_position, "Declaration:")
-    c.setFont("Helvetica", 8)
-    y_position -= 12
-    c.drawString(margin, y_position, "We declare that this invoice shows the actual price of the labour work described and that all particulars are true and correct.")
+    elements.append(Paragraph("<b>Declaration:</b> We declare that this invoice shows the actual price of the labour work described and that all particulars are true and correct.", styles['Normal']))
+    elements.append(Spacer(1, 0.3*inch))
     
     # Signatures
-    y_position -= 50
+    signature_data = [
+        ["Customer Seal and Signature", "", "For SHIVA FABRICATION"],
+        ["", "", ""],
+        ["", "", "Proprietor"]
+    ]
     
-    # Thin line above signatures
-    c.setStrokeColorRGB(0.8, 0.8, 0.8)  # Light gray
-    c.line(margin, y_position + 10, width - margin, y_position + 10)
+    signature_table = Table(signature_data, colWidths=[2.4*inch, 2.4*inch, 2.4*inch])
+    signature_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (0, 0), 'CENTER'),
+        ('ALIGN', (2, 0), (2, 0), 'CENTER'),
+        ('ALIGN', (2, 2), (2, 2), 'CENTER'),
+        ('LINEABOVE', (0, 1), (0, 1), 0.5, colors.black),
+        ('LINEABOVE', (2, 1), (2, 1), 0.5, colors.black),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
     
-    # Customer signature on left
-    c.setFont("Helvetica-Bold", 9)
-    c.drawString(margin + 30, y_position, "Customer Seal and Signature")
-    c.setStrokeColorRGB(0.5, 0.5, 0.5)  # Gray
-    c.line(margin, y_position - 30, margin + 200, y_position - 30)
-    
-    # Company signature on right
-    c.drawString(width - margin - 170, y_position, "For SHIVA FABRICATION")
-    c.line(width - margin - 200, y_position - 30, width - margin, y_position - 30)
-    c.setFont("Helvetica", 9)
-    c.drawString(width - margin - 170, y_position - 40, "Proprietor")
+    elements.append(signature_table)
     
     # If feedback is enabled, add the feedback URL
     if bill.enable_feedback and bill.feedback_code:
-        y_position -= 80
-        c.setFont("Helvetica", 8)
+        elements.append(Spacer(1, 0.2*inch))
         feedback_url = get_feedback_url(bill.feedback_code)
-        c.drawString(margin, y_position, f"Please provide your feedback at: {feedback_url}")
+        elements.append(Paragraph(f"Please provide your feedback at: {feedback_url}", styles['Normal']))
     
-    # Add a footer with page number
-    c.setFont("Helvetica", 8)
-    c.setFillColorRGB(0.5, 0.5, 0.5)  # Gray
-    c.drawString(width/2 - 70, 20, "Thank you for your business!")
-    c.drawString(width - margin - 60, 20, "Page 1 of 1")
+    # Build the PDF
+    doc.build(elements)
     
-    c.save()
     buffer.seek(0)
     return buffer
 
