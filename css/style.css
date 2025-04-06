@@ -1,5 +1,8 @@
 /* Modern Dark UI - Global Styles */
+
+/* Light/Dark Theme Variables */
 :root {
+  /* Dark theme (default) */
   --primary-color: #00c6ff;
   --primary-dark: #0099cc;
   --primary-light: #33d1ff;
@@ -24,6 +27,310 @@
   --border-radius-lg: 12px;
   --border-radius-sm: 4px;
   --header-height: 80px;
+}
+
+/* Light theme */
+[data-theme="light"] {
+  --primary-color: #0072ff;
+  --primary-dark: #0058cc;
+  --primary-light: #3390ff;
+  --secondary-color: #ff5252;
+  --dark-bg: #f8f9fa;
+  --darker-bg: #f1f3f5;
+  --card-bg: #ffffff;
+  --card-hover: #f8f9fa;
+  --border-color: #e9ecef;
+  --text-primary: #212529;
+  --text-secondary: #495057;
+  --text-muted: #6c757d;
+  --gradient-primary: linear-gradient(135deg, #0072ff 0%, #00c6ff 100%);
+  --gradient-secondary: linear-gradient(135deg, #ff5252 0%, #ff3366 100%);
+  --box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* Theme toggle button */
+.theme-toggle {
+  position: fixed;
+  bottom: 30px;
+  left: 30px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  z-index: 999;
+  box-shadow: var(--card-shadow);
+  transition: var(--transition);
+}
+
+.theme-toggle:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--box-shadow);
+  color: var(--primary-color);
+}
+
+/* Header Adjustments */
+[data-theme="light"] header {
+  background-color: rgba(248, 249, 250, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] header.scrolled {
+  background-color: rgba(241, 243, 245, 0.98);
+}
+
+[data-theme="light"] .hamburger .line {
+  background-color: var(--text-primary);
+}
+
+/* Navigation Adjustments */
+[data-theme="light"] .nav-links a {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .nav-links a:hover,
+[data-theme="light"] .nav-links a.active {
+  color: var(--primary-color);
+}
+
+/* Hero Section Adjustments */
+[data-theme="light"] .hero {
+  background: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), 
+              url('https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+}
+
+[data-theme="light"] .hero::before {
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4));
+}
+
+[data-theme="light"] .hero-content h1,
+[data-theme="light"] .page-header h1 {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Section Background Adjustments */
+[data-theme="light"] .services-preview,
+[data-theme="light"] .projects-preview,
+[data-theme="light"] .mission-vision,
+[data-theme="light"] .faq-section {
+  background-color: var(--darker-bg);
+}
+
+[data-theme="light"] .about-preview {
+  background-color: var(--dark-bg);
+}
+
+/* Card Adjustments */
+[data-theme="light"] .service-card,
+[data-theme="light"] .project-card,
+[data-theme="light"] .feature-card,
+[data-theme="light"] .workforce-card,
+[data-theme="light"] .benefit-card,
+[data-theme="light"] .contact-card,
+[data-theme="light"] .testimonial-card,
+[data-theme="light"] .faq-item,
+[data-theme="light"] .stat-item,
+[data-theme="light"] .mission-box,
+[data-theme="light"] .vision-box,
+[data-theme="light"] .values-box,
+[data-theme="light"] .sidebar-widget,
+[data-theme="light"] .challenge-item,
+[data-theme="light"] .contact-form-container,
+[data-theme="light"] .additional-terms,
+[data-theme="light"] .terms-note {
+  background-color: var(--card-bg);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: var(--card-shadow);
+}
+
+[data-theme="light"] .service-card:hover,
+[data-theme="light"] .project-card:hover,
+[data-theme="light"] .feature-card:hover,
+[data-theme="light"] .workforce-card:hover,
+[data-theme="light"] .benefit-card:hover,
+[data-theme="light"] .contact-card:hover,
+[data-theme="light"] .testimonial-card:hover,
+[data-theme="light"] .faq-item:hover {
+  border-color: rgba(0, 114, 255, 0.3);
+}
+
+/* CTA Section Adjustments */
+[data-theme="light"] .cta-section {
+  background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), 
+              url('https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+}
+
+[data-theme="light"] .cta-section::before {
+  background: linear-gradient(135deg, rgba(0, 114, 255, 0.1) 0%, rgba(255, 82, 82, 0.1) 100%);
+}
+
+/* Footer Adjustments */
+[data-theme="light"] footer {
+  background-color: var(--darker-bg);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .footer-bottom {
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .social-icons a {
+  background: var(--card-bg);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .social-icons a:hover {
+  background: var(--primary-color);
+  color: white;
+}
+
+/* Project Detail Page Adjustments */
+[data-theme="light"] .project-header,
+[data-theme="light"] .page-header {
+  background-color: var(--darker-bg);
+}
+
+[data-theme="light"] .project-header::before,
+[data-theme="light"] .page-header::before {
+  background: linear-gradient(135deg, rgba(0, 114, 255, 0.1) 0%, rgba(255, 82, 82, 0.1) 100%);
+}
+
+[data-theme="light"] .project-navigation {
+  background-color: var(--darker-bg);
+}
+
+[data-theme="light"] .back-to-projects,
+[data-theme="light"] .prev-project,
+[data-theme="light"] .next-project {
+  background-color: var(--card-bg);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Form Elements Adjustments */
+[data-theme="light"] .form-group input,
+[data-theme="light"] .form-group textarea {
+  background-color: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .form-group input:focus,
+[data-theme="light"] .form-group textarea:focus {
+  background-color: rgba(0, 0, 0, 0.04);
+  border-color: var(--primary-color);
+}
+
+/* Table Adjustments */
+[data-theme="light"] .rates-table th {
+  background: var(--gradient-primary);
+  color: white;
+}
+
+[data-theme="light"] .rates-table tr {
+  background-color: var(--card-bg);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .rates-table tr:hover {
+  background-color: var(--card-hover);
+}
+
+/* Map Container */
+[data-theme="light"] .map-container iframe {
+  filter: none;
+}
+
+/* Scroll to Top and Toast */
+[data-theme="light"] .scroll-to-top {
+  background: var(--gradient-primary);
+  color: white;
+}
+
+[data-theme="light"] .toast {
+  background-color: var(--card-bg);
+  border-left: 4px solid var(--primary-color);
+  box-shadow: var(--box-shadow);
+}
+
+/* Loader */
+[data-theme="light"] .loader {
+  background-color: var(--darker-bg);
+}
+
+/* FAQ Accordion */
+[data-theme="light"] .faq-question {
+  background-color: var(--card-bg);
+}
+
+[data-theme="light"] .toggle-icon {
+  background-color: rgba(0, 114, 255, 0.1);
+}
+
+[data-theme="light"] .faq-item.active .toggle-icon {
+  background-color: var(--primary-color);
+}
+
+/* Process Steps */
+[data-theme="light"] .process-step:not(:last-child)::after {
+  background: linear-gradient(to bottom, var(--primary-color), transparent);
+}
+
+/* Additional Specific Adjustments */
+[data-theme="light"] .quote-icon {
+  color: rgba(0, 114, 255, 0.1);
+}
+
+[data-theme="light"] .footer-links ul li a::before,
+[data-theme="light"] .values-box ul li::before,
+[data-theme="light"] .project-scope ul li::before,
+[data-theme="light"] .project-results ul li::before,
+[data-theme="light"] .service-card.detailed ul li::before,
+[data-theme="light"] .workforce-card ul li::before {
+  color: var(--primary-color);
+}
+
+/* Fix for gradient text */
+[data-theme="light"] .text-gradient {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Custom Scrollbar for Light Theme */
+[data-theme="light"]::-webkit-scrollbar {
+  width: 10px;
+}
+
+[data-theme="light"]::-webkit-scrollbar-track {
+  background: var(--darker-bg);
+}
+
+[data-theme="light"]::-webkit-scrollbar-thumb {
+  background: var(--primary-dark);
+  border-radius: 5px;
+}
+
+[data-theme="light"]::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color);
+}
+
+/* Mobile Nav in Light Mode */
+@media (max-width: 991.98px) {
+  [data-theme="light"] .nav-links {
+    background-color: var(--darker-bg);
+    box-shadow: -5px 0 30px rgba(0, 0, 0, 0.1);
+  }
 }
 
 * {
@@ -2542,4 +2849,82 @@ footer::before {
 
 .toast-close:hover {
   color: var(--primary-color);
+}
+/* Mobile Navigation Overlay and Close Button */
+.mobile-nav-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  backdrop-filter: blur(3px);
+}
+
+[data-theme="light"] .mobile-nav-overlay {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.mobile-nav-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: var(--transition);
+}
+
+.mobile-nav-close:hover {
+  background-color: var(--primary-color);
+  color: white;
+  transform: rotate(90deg);
+}
+
+@media (max-width: 991.98px) {
+  .nav-links {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 300px;
+      height: 100vh;
+      background-color: var(--darker-bg);
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-start;
+      padding: 100px 40px 40px;
+      transition: right 0.3s ease;
+      box-shadow: -5px 0 30px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      overflow-y: auto;
+  }
+  
+  .nav-links.active {
+      right: 0;
+  }
+  
+  .nav-links li {
+      margin: 15px 0;
+      width: 100%;
+  }
+  
+  .nav-links a {
+      display: block;
+      width: 100%;
+      padding: 10px 0;
+  }
+  
+  body.no-scroll {
+      overflow: hidden;
+  }
 }
