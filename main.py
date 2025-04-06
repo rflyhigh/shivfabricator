@@ -388,126 +388,259 @@ def get_bill_url(bill_code):
 def generate_bill_pdf(bill: BillInDB):
     buffer = BytesIO()
     
-    # Create PDF
+    # Create PDF with better styling
     c = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
     
-    # Title
+    # Set up some constants
+    margin = 50
+    col_width = width - 2 * margin
+    line_height = 14
+    
+    # Add a light blue header
+    c.setFillColorRGB(0.95, 0.95, 0.95)  # Very light gray
+    c.rect(0, height - 120, width, 120, fill=True, stroke=False)
+    
+    # Company Logo (if available) or Name
+    c.setFillColorRGB(0, 0, 0)  # Black text
+    c.setFont("Helvetica-Bold", 22)
+    c.drawString(margin, height - 50, "SHIVA FABRICATION")
+    
+    # Company details with better formatting
+    c.setFont("Helvetica", 9)
+    c.drawString(margin, height - 65, "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015")
+    c.drawString(margin, height - 78, "Contact: 8805954132 / 9096553951")
+    c.drawString(margin, height - 91, "Email: shivfabricator1@gmail.com")
+    
+    # Invoice title
     c.setFont("Helvetica-Bold", 18)
-    c.drawCentredString(width/2, height - 50, "INVOICE")
-    
-    # Company details
-    c.setFont("Helvetica-Bold", 14)
-    c.drawString(50, height - 80, "SHIVA FABRICATION")
-    c.setFont("Helvetica", 10)
-    c.drawString(50, height - 95, "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015")
-    c.drawString(50, height - 110, "Contact: 8805954132 / 9096553951   shivfabricator1@gmail.com")
-    
-    # Bill To
-    c.setFont("Helvetica-Bold", 11)
-    c.drawString(50, height - 140, "Bill To,")
-    c.setFont("Helvetica", 10)
-    c.drawString(50, height - 155, bill.bill_to)
-    
-    # Add address with line breaks
-    address_lines = bill.bill_to_address.split(', ')
-    y_position = height - 170
-    for line in address_lines:
-        c.drawString(50, y_position, line)
-        y_position -= 15
-    
-    # Company PAN and Bank Details
-    c.setFont("Helvetica-Bold", 9)
-    c.drawString(50, height - 215, "Company PAN: " + (bill.company_pan or ""))
-    c.drawString(50, height - 230, "Declaration:")
-    c.setFont("Helvetica", 8)
-    c.drawString(50, height - 245, "We Declare that this invoice shows the actual price of the labour")
-    c.drawString(50, height - 255, "work described and that all purchases are true and correct")
-    
-    # Bank details
-    c.setFont("Helvetica-Bold", 9)
-    c.drawString(350, height - 215, "Bank Details:")
-    c.setFont("Helvetica", 8)
-    c.drawString(350, height - 230, "Name of the Beneficiary: SHIVA FABRICATION")
-    c.drawString(350, height - 245, "A/C NO. 110504180001097")
-    c.drawString(350, height - 260, "IFSC CODE: SVCB0000105")
-    c.drawString(350, height - 275, "THANKYOU FOR YOUR BUSINESS")
+    c.setFillColorRGB(0, 0.78, 1)  # Primary blue color
+    invoice_text = "INVOICE"
+    invoice_width = c.stringWidth(invoice_text, "Helvetica-Bold", 18)
+    c.drawString(width - margin - invoice_width, height - 50, invoice_text)
     
     # Invoice details
-    c.setFont("Helvetica-Bold", 9)
-    c.drawString(50, height - 295, f"Invoice No: {bill.invoice_no}")
-    c.drawString(250, height - 295, f"Dated: {bill.date}")
-    c.drawString(50, height - 310, f"Suppliers Ref No: {bill.suppliers_ref_no or '-'}")
-    c.drawString(50, height - 325, f"Buyers Order No: {bill.buyers_order_no or '-'}")
-    c.drawString(50, height - 340, f"Other Terms: {bill.other_terms or '-'}")
-    
-    # Table headers
-    data = [
-        ["Sr.No.", "HSN/SAC CODE", "DESCRIPTION", "Qty", "Unit", "Rate", "Amount"]
-    ]
-    
-    # Add items to table
-    for item in bill.items:
-        data.append([
-            str(item.sr_no),
-            item.hsn_code or "-",
-            item.description,
-            item.qty or "-",
-            item.unit or "-",
-            f"{item.rate:,.2f}",
-            f"{item.amount:,.2f}"
-        ])
-    
-    # Create table
-    table = Table(data, colWidths=[40, 70, 200, 50, 50, 70, 70])
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('ALIGN', (2, 1), (2, -1), 'LEFT'),  # Description column left-aligned
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    
-    # Draw the table
-    table.wrapOn(c, width, height)
-    table.drawOn(c, 30, height - 430)
-    
-    # Totals
+    c.setFillColorRGB(0, 0, 0)  # Black text
     c.setFont("Helvetica-Bold", 10)
-    c.drawString(400, height - 460, "Sub Total:")
-    c.drawString(500, height - 460, f"{bill.sub_total:,.2f}")
+    c.drawString(width - margin - 150, height - 70, f"Invoice No: {bill.invoice_no}")
+    c.setFont("Helvetica", 10)
+    c.drawString(width - margin - 150, height - 85, f"Date: {bill.date}")
     
-    y_offset = 475
+    # Thin separator line
+    c.setStrokeColorRGB(0.8, 0.8, 0.8)  # Light gray
+    c.setLineWidth(0.5)
+    c.line(margin, height - 130, width - margin, height - 130)
+    
+    # Bill To section
+    y_position = height - 150
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(margin, y_position, "Bill To:")
+    c.setFont("Helvetica-Bold", 10)
+    y_position -= 15
+    c.drawString(margin, y_position, bill.bill_to)
+    c.setFont("Helvetica", 9)
+    
+    # Handle multiline addresses
+    address_lines = bill.bill_to_address.split(', ')
+    for line in address_lines:
+        y_position -= 12
+        c.drawString(margin, y_position, line)
+    
+    # Invoice details on right side
+    details_y = height - 150
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(width - margin - 200, details_y, "Invoice Details:")
+    c.setFont("Helvetica", 9)
+    
+    details_y -= 15
+    if bill.company_pan:
+        c.drawString(width - margin - 200, details_y, f"Company PAN: {bill.company_pan}")
+        details_y -= 12
+    
+    if bill.suppliers_ref_no:
+        c.drawString(width - margin - 200, details_y, f"Supplier's Ref No: {bill.suppliers_ref_no}")
+        details_y -= 12
+    
+    if bill.buyers_order_no:
+        c.drawString(width - margin - 200, details_y, f"Buyer's Order No: {bill.buyers_order_no}")
+        details_y -= 12
+    
+    if bill.other_terms:
+        c.drawString(width - margin - 200, details_y, f"Other Terms: {bill.other_terms}")
+    
+    # Items Table
+    y_position = min(y_position, details_y) - 30
+    
+    # Table header
+    c.setFillColorRGB(0.95, 0.95, 0.95)  # Very light gray
+    c.rect(margin, y_position - 15, width - 2 * margin, 20, fill=True, stroke=False)
+    
+    c.setFillColorRGB(0, 0, 0)  # Black
+    c.setFont("Helvetica-Bold", 9)
+    
+    # Define column widths (as percentages of available width)
+    col_widths = [0.07, 0.13, 0.4, 0.08, 0.08, 0.12, 0.12]
+    col_positions = [margin]
+    
+    for i in range(len(col_widths)):
+        col_positions.append(col_positions[-1] + col_widths[i] * col_width)
+    
+    # Draw table headers
+    headers = ["Sr.No.", "HSN/SAC", "Description", "Qty", "Unit", "Rate", "Amount"]
+    for i, header in enumerate(headers):
+        c.drawString(col_positions[i] + 3, y_position - 10, header)
+        
+    # Draw header line
+    c.setLineWidth(0.5)
+    c.line(margin, y_position - 15, width - margin, y_position - 15)
+    c.line(margin, y_position + 5, width - margin, y_position + 5)
+    
+    # Draw table items
+    y_position -= 30
+    c.setFont("Helvetica", 9)
+    
+    for item in bill.items:
+        # Draw item details
+        c.drawString(col_positions[0] + 3, y_position, str(item.sr_no))
+        c.drawString(col_positions[1] + 3, y_position, item.hsn_code or "-")
+        
+        # Handle long descriptions - wrap text
+        description_words = item.description.split()
+        description_line = ""
+        description_y = y_position
+        
+        for word in description_words:
+            test_line = description_line + " " + word if description_line else word
+            if c.stringWidth(test_line, "Helvetica", 9) < (col_widths[2] * col_width - 6):
+                description_line = test_line
+            else:
+                c.drawString(col_positions[2] + 3, description_y, description_line)
+                description_y -= 12
+                description_line = word
+        
+        # Draw the last line of description
+        if description_line:
+            c.drawString(col_positions[2] + 3, description_y, description_line)
+        
+        # Continue with other columns
+        c.drawString(col_positions[3] + 3, y_position, item.qty or "-")
+        c.drawString(col_positions[4] + 3, y_position, item.unit or "-")
+        
+        # Right-align the rate and amount
+        rate_text = f"₹{item.rate:,.2f}"
+        amount_text = f"₹{item.amount:,.2f}"
+        
+        rate_width = c.stringWidth(rate_text, "Helvetica", 9)
+        amount_width = c.stringWidth(amount_text, "Helvetica", 9)
+        
+        c.drawString(col_positions[6] - amount_width - 3, y_position, amount_text)
+        c.drawString(col_positions[5] - rate_width - 3, y_position, rate_text)
+        
+        # Draw vertical lines for the row
+        for pos in col_positions:
+            c.line(pos, y_position - 15, pos, y_position + 15)
+        c.line(width - margin, y_position - 15, width - margin, y_position + 15)
+        
+        # Draw horizontal line below the row
+        c.line(margin, y_position - 15, width - margin, y_position - 15)
+        
+        # Move to next row
+        y_position -= max(30, description_y - y_position + 30)  # Adjust height based on description length
+    
+    # Draw the table bottom line
+    c.line(margin, y_position, width - margin, y_position)
+    
+    # Totals section
+    y_position -= 30
+    
+    # Sub Total
+    c.setFont("Helvetica", 9)
+    sub_total_text = f"₹{bill.sub_total:,.2f}"
+    sub_total_width = c.stringWidth(sub_total_text, "Helvetica", 9)
+    c.drawString(col_positions[5] - 3, y_position, "Sub Total:")
+    c.drawString(width - margin - sub_total_width - 3, y_position, sub_total_text)
+    
+    y_position -= 15
+    
+    # GST if applicable
     if bill.gst:
-        c.drawString(400, height - y_offset, "GST:")
-        c.drawString(500, height - y_offset, f"{bill.gst:,.2f}")
-        y_offset += 15
+        gst_text = f"₹{bill.gst:,.2f}"
+        gst_width = c.stringWidth(gst_text, "Helvetica", 9)
+        c.drawString(col_positions[5] - 3, y_position, "GST:")
+        c.drawString(width - margin - gst_width - 3, y_position, gst_text)
+        y_position -= 15
     
+    # Round off if applicable
     if bill.round_off:
-        c.drawString(400, height - y_offset, "Round off:")
-        c.drawString(500, height - y_offset, f"{bill.round_off:,.2f}")
-        y_offset += 15
+        round_off_text = f"₹{bill.round_off:,.2f}"
+        round_off_width = c.stringWidth(round_off_text, "Helvetica", 9)
+        c.drawString(col_positions[5] - 3, y_position, "Round Off:")
+        c.drawString(width - margin - round_off_width - 3, y_position, round_off_text)
+        y_position -= 15
     
-    c.drawString(400, height - y_offset, "Grand Total Amount:")
-    c.drawString(500, height - y_offset, f"{bill.grand_total:,.2f}")
+    # Grand Total
+    c.setFont("Helvetica-Bold", 10)
+    total_text = f"₹{bill.grand_total:,.2f}"
+    total_width = c.stringWidth(total_text, "Helvetica-Bold", 10)
+    c.drawString(col_positions[5] - 3, y_position, "Grand Total:")
+    c.drawString(width - margin - total_width - 3, y_position, total_text)
+    
+    # Draw a line above the grand total
+    c.setLineWidth(0.5)
+    c.line(col_positions[5] - 10, y_position + 5, width - margin, y_position + 5)
     
     # Amount in words
-    c.setFont("Helvetica", 10)
-    c.drawString(50, height - 460, "Amount in words: " + bill.amount_in_words)
+    y_position -= 30
+    c.setFont("Helvetica-Bold", 9)
+    c.drawString(margin, y_position, "Amount in words:")
+    c.setFont("Helvetica-Oblique", 9)
+    c.drawString(margin + 100, y_position, bill.amount_in_words)
+    
+    # Bank details
+    y_position -= 30
+    c.setFont("Helvetica-Bold", 9)
+    c.drawString(margin, y_position, "Bank Details:")
+    c.setFont("Helvetica", 9)
+    y_position -= 15
+    c.drawString(margin, y_position, "Name of the Beneficiary: SHIVA FABRICATION")
+    y_position -= 12
+    c.drawString(margin, y_position, "A/C NO. 110504180001097")
+    y_position -= 12
+    c.drawString(margin, y_position, "IFSC CODE: SVCB0000105")
+    
+    # Declaration
+    y_position -= 30
+    c.setFont("Helvetica-Bold", 9)
+    c.drawString(margin, y_position, "Declaration:")
+    c.setFont("Helvetica", 8)
+    y_position -= 12
+    c.drawString(margin, y_position, "We declare that this invoice shows the actual price of the labour work described and that all particulars are true and correct.")
     
     # Signatures
-    c.setFont("Helvetica-Bold", 10)
-    c.drawString(50, height - 520, "Customer Seal and Signature:")
-    c.drawString(400, height - 520, "For SHIVA FABRICATION:")
-    c.drawString(400, height - 550, "Proprietor")
+    y_position -= 50
+    
+    # Customer signature on left
+    c.setFont("Helvetica-Bold", 9)
+    c.drawString(margin + 30, y_position, "Customer Seal and Signature")
+    c.line(margin, y_position - 30, margin + 200, y_position - 30)
+    
+    # Company signature on right
+    c.drawString(width - margin - 170, y_position, "For SHIVA FABRICATION")
+    c.line(width - margin - 200, y_position - 30, width - margin, y_position - 30)
+    c.setFont("Helvetica", 9)
+    c.drawString(width - margin - 170, y_position - 40, "Proprietor")
     
     # If feedback is enabled, add the feedback URL
     if bill.enable_feedback and bill.feedback_code:
+        y_position -= 80
         c.setFont("Helvetica", 8)
         feedback_url = get_feedback_url(bill.feedback_code)
-        c.drawString(50, height - 580, f"Please provide your feedback at: {feedback_url}")
+        c.drawString(margin, y_position, f"Please provide your feedback at: {feedback_url}")
+    
+    # Add a footer with page number
+    c.setFont("Helvetica", 8)
+    c.drawString(width/2 - 40, 30, "Thank you for your business!")
+    c.drawString(width - margin - 100, 20, "Page 1 of 1")
     
     c.save()
     buffer.seek(0)
