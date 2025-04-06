@@ -1323,7 +1323,7 @@
             gap: 20px;
         }
 
-        .btn-download {
+        .btn-download, .btn-print {
             background-color: var(--primary-color);
             color: white;
             padding: 12px 25px;
@@ -1336,11 +1336,11 @@
             cursor: pointer;
         }
 
-        .btn-download i {
+        .btn-download i, .btn-print i {
             margin-right: 10px;
         }
 
-        .btn-download:hover {
+        .btn-download:hover, .btn-print:hover {
             background-color: var(--primary-dark);
             transform: translateY(-2px);
         }
@@ -1366,6 +1366,31 @@
 
         .feedback-link a:hover {
             color: var(--primary-dark);
+        }
+
+        /* Print styles */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .bill-container, .bill-container * {
+                visibility: visible;
+            }
+            .bill-container {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+            }
+            .bill-actions, .feedback-link, .btn-download, .btn-print {
+                display: none !important;
+            }
+            header, footer, .scroll-to-top {
+                display: none !important;
+            }
         }
 
         /* Responsive Styles */
@@ -1494,7 +1519,7 @@
                 align-items: center;
             }
             
-            .btn-download {
+            .btn-download, .btn-print {
                 width: 100%;
                 justify-content: center;
             }
@@ -1929,7 +1954,7 @@
             function renderBill(bill) {
                 // Create HTML for the bill
                 const billHtml = `
-                    <div class="bill-container">
+                    <div class="bill-container" id="printableArea">
                         <div class="bill-header">
                             <div class="bill-header-content">
                                 <div class="bill-company">
@@ -2001,13 +2026,6 @@
                                                 <td>${item.unit || '-'}</td>
                                                 <td class="text-right">₹${item.rate.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                                 <td class="text-right">₹${item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                                <td>${item.sr_no}</td>
-                                                <td>${item.hsn_code || '-'}</td>
-                                                <td>${item.description}</td>
-                                                <td>${item.qty || '-'}</td>
-                                                <td>${item.unit || '-'}</td>
-                                                <td class="text-right">₹${item.rate.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                                <td class="text-right">₹${item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                             </tr>
                                         `).join('')}
                                     </tbody>
@@ -2063,25 +2081,33 @@
                             <div class="bill-notes">
                                 <p><strong>Declaration:</strong> We declare that this invoice shows the actual price of the labour work described and that all particulars are true and correct.</p>
                             </div>
-                            
-                            <div class="bill-actions">
-                                <a href="https://shivfabricator.onrender.com${bill.download_url}" class="btn-download" target="_blank">
-                                    <i class="fas fa-download"></i> Download PDF
-                                </a>
-                            </div>
-                            
-                            ${bill.feedback_url ? `
-                                <div class="feedback-link">
-                                    <p>We value your feedback! Please share your experience with our services.</p>
-                                    <a href="${bill.feedback_url}" target="_blank">Provide Feedback</a>
-                                </div>
-                            ` : ''}
                         </div>
                     </div>
+                    
+                    <div class="bill-actions">
+                        <a href="https://shivfabricator.onrender.com${bill.download_url}" class="btn-download" target="_blank">
+                            <i class="fas fa-download"></i> Download PDF
+                        </a>
+                        <button class="btn-print" onclick="printBill()">
+                            <i class="fas fa-print"></i> Print Invoice
+                        </button>
+                    </div>
+                    
+                    ${bill.feedback_url ? `
+                        <div class="feedback-link">
+                            <p>We value your feedback! Please share your experience with our services.</p>
+                            <a href="${bill.feedback_url}" target="_blank">Provide Feedback</a>
+                        </div>
+                    ` : ''}
                 `;
                 
                 // Set the content
                 dynamicContent.innerHTML = billHtml;
+                
+                // Add print function to window
+                window.printBill = function() {
+                    window.print();
+                };
             }
             
             // Load feedback submission form
@@ -2095,6 +2121,27 @@
                 
                 try {
                     console.log('Loading feedback form with code:', code);
+                    
+                    // First, fetch the project details associated with this feedback code
+                    const projectResponse = await fetch(`${API_URL}/feedback/code-info/${code}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    }).catch(err => {
+                        console.error('Error fetching project info:', err);
+                        return { ok: false };
+                    });
+                    
+                    let projectName = '';
+                    let serviceType = '';
+                    
+                    if (projectResponse && projectResponse.ok) {
+                        const projectData = await projectResponse.json();
+                        projectName = projectData.project_name || '';
+                        serviceType = projectData.service_type || '';
+                    }
+                    
                     dynamicContent.innerHTML = `
                         <section class="page-header">
                             <div class="container">
@@ -2108,10 +2155,13 @@
                                 <div class="feedback-form-container">
                                     <div class="form-header">
                                         <h2>Share Your Experience</h2>
-                                        <p>Please tell us about your experience working with Shiva Fabrications.</p>
+                                        ${projectName ? `<p>Please tell us about your experience with our <strong>${projectName}</strong> service.</p>` : 
+                                           `<p>Please tell us about your experience working with Shiva Fabrications.</p>`}
                                     </div>
                                     <form id="feedbackForm" class="feedback-form">
                                         <input type="hidden" id="feedbackCode" value="${code}">
+                                        <input type="hidden" id="projectName" value="${projectName}">
+                                        <input type="hidden" id="serviceType" value="${serviceType}">
                                         
                                         <div class="form-group">
                                             <label for="companyName">Company Name*</label>
@@ -2222,7 +2272,9 @@
                             author_name: document.getElementById('authorName').value,
                             rating: parseInt(document.getElementById('rating').value),
                             text: document.getElementById('feedbackText').value,
-                            feedback_code: document.getElementById('feedbackCode').value
+                            feedback_code: document.getElementById('feedbackCode').value,
+                            project_name: document.getElementById('projectName').value,
+                            service_type: document.getElementById('serviceType').value
                         };
                         
                         try {
@@ -2350,3 +2402,4 @@
     </script>
 </body>
 </html>
+                
