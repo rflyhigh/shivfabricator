@@ -376,7 +376,21 @@ async def upload_image_to_imgbb(image_data, name=None):
 def generate_feedback_code():
     return ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(32))
 
+def get_project_url(slug):
+    return f"{BASE_URL}/projects/{slug}"
+
+def get_feedback_url(code):
+    return f"{BASE_URL}/feedback?code={code}"
+
+def get_bill_url(bill_code):
+    return f"{BASE_URL}/bill?code={bill_code}"
+
 def generate_bill_pdf(bill: BillInDB):
+    """Generate a PDF invoice for the given bill"""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.units import inch
+    
     buffer = BytesIO()
     
     # Create PDF with better styling
@@ -519,9 +533,7 @@ def generate_bill_pdf(bill: BillInDB):
         rate_text = f"Rs. {item.rate:,.2f}"
         amount_text = f"Rs. {item.amount:,.2f}"
         
-        rate_width = c.stringWidth(rate_text, "Helvetica", 9)
-        amount_width = c.stringWidth(amount_text, "Helvetica", 9)
-        
+        # Use drawRightString for proper alignment
         c.drawRightString(col_positions[6] + col_widths[6] * col_width - 3, y_position, amount_text)
         c.drawRightString(col_positions[5] + col_widths[5] * col_width - 3, y_position, rate_text)
         
@@ -629,7 +641,9 @@ def generate_bill_pdf(bill: BillInDB):
     if bill.enable_feedback and bill.feedback_code:
         y_position -= 80
         c.setFont("Helvetica", 8)
-        feedback_url = get_feedback_url(bill.feedback_code)
+        # Construct feedback URL directly instead of using the function
+        base_url = os.getenv("BASE_URL", "https://shivafabrications.versz.fun")
+        feedback_url = f"{base_url}/feedback?code={bill.feedback_code}"
         c.drawString(margin, y_position, f"Please provide your feedback at: {feedback_url}")
     
     # Add a footer with page number
@@ -641,6 +655,22 @@ def generate_bill_pdf(bill: BillInDB):
     c.save()
     buffer.seek(0)
     return buffer
+
+# API routes
+@app.post("/api/token", response_model=Token)
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = await authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.email}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/api/health", response_model=HealthCheck)
 async def health_check():
