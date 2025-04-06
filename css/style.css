@@ -2995,3 +2995,28 @@ footer::before {
       overflow: hidden;
   }
 }
+/* Change theme toggle position on mobile */
+@media (max-width: 991.98px) {
+  .theme-toggle {
+    bottom: auto;
+    left: auto;
+    top: 20px;
+    right: 80px; /* Position it to the left of the hamburger menu */
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+    z-index: 1001; /* Make sure it's above other elements */
+  }
+  
+  /* Adjust dark mode toggle too if it's being used */
+  .dark-mode-toggle {
+    bottom: auto;
+    left: auto;
+    top: 20px;
+    right: 80px;
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+    z-index: 1001;
+  }
+}
