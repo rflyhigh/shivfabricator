@@ -1,9 +1,11 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const { API_URL, getAuthHeaders, handleApiError, formatDate, showToast } = window.adminUtils;
+    const { API_URL, getAuthHeaders, handleApiError, formatDate, showToast, toggleModal, debounce, escapeHtml } = window.adminUtils;
     const messagesList = document.getElementById('messagesList');
     const messageSearch = document.getElementById('messageSearch');
+    const messageFilter = document.getElementById('messageFilter');
     const refreshMessages = document.getElementById('refreshMessages');
     const messagesPagination = document.getElementById('messagesPagination');
+    const messageCount = document.getElementById('messageCount');
     
     // View message modal elements
     const viewMessageModal = document.getElementById('viewMessageModal');
@@ -33,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Filter variables
     let searchTerm = '';
+    let filterStatus = 'all';
     
     // Current messages data
     let messages = [];
@@ -43,13 +46,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load messages
     async function loadMessages() {
         try {
-            messagesList.innerHTML = '<tr><td colspan="5" class="text-center">Loading messages...</td></tr>';
+            messagesList.innerHTML = '<tr><td colspan="5" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading messages...</td></tr>';
+            
+            if (refreshMessages) {
+                refreshMessages.disabled = true;
+                refreshMessages.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+            }
             
             // Calculate skip for pagination
             const skip = (currentPage - 1) * itemsPerPage;
             
             // Build query parameters
             let url = `${API_URL}/contact?skip=${skip}&limit=${itemsPerPage}`;
+            if (filterStatus !== 'all') {
+                url += `&status=${filterStatus}`;
+            }
+            if (searchTerm) {
+                url += `&search=${encodeURIComponent(searchTerm)}`;
+            }
             
             const response = await fetch(url, {
                 headers: getAuthHeaders()
@@ -59,51 +73,58 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             // Store messages data
-            messages = data;
+            messages = data.messages || data; // Handle different API response formats
             
-            // For demo purposes, set total to number of messages returned
-            // In a real API, you would get total from response metadata
-            totalMessages = data.length > itemsPerPage ? data.length : itemsPerPage * 2;
+            // Get total count from response metadata or estimate
+            totalMessages = data.total || messages.length;
             totalPages = Math.ceil(totalMessages / itemsPerPage);
             
+            // Update message count
+            if (messageCount) {
+                messageCount.textContent = totalMessages;
+            }
+            
             // Render messages
-            renderMessages(data);
+            renderMessages(messages);
             
             // Update pagination
             renderPagination();
             
         } catch (error) {
             console.error('Error loading messages:', error);
-            messagesList.innerHTML = '<tr><td colspan="5" class="text-center">Failed to load messages</td></tr>';
+            messagesList.innerHTML = '<tr><td colspan="5" class="text-center text-danger"><i class="fas fa-exclamation-circle"></i> Failed to load messages</td></tr>';
+        } finally {
+            if (refreshMessages) {
+                refreshMessages.disabled = false;
+                refreshMessages.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+            }
         }
     }
     
     // Render messages in table
     function renderMessages(messages) {
-        if (messages.length === 0) {
+        if (!messages || messages.length === 0) {
             messagesList.innerHTML = '<tr><td colspan="5" class="text-center">No messages found</td></tr>';
             return;
         }
         
         let html = '';
         messages.forEach(message => {
-            // Filter by search term if present
-            if (searchTerm && !messageMatchesSearch(message, searchTerm)) {
-                return;
-            }
+            const isUnread = message.status === 'unread' || !message.status;
+            const rowClass = isUnread ? 'unread' : '';
             
             html += `
-                <tr>
-                    <td>${message.name}</td>
-                    <td>${message.email}</td>
-                    <td>${message.subject}</td>
+                <tr class="${rowClass}">
+                    <td>${escapeHtml(message.name)}</td>
+                    <td>${escapeHtml(message.email)}</td>
+                    <td>${escapeHtml(message.subject)}</td>
                     <td>${formatDate(message.created_at)}</td>
                     <td>
                         <div class="actions">
                             <button class="action-btn" title="View" onclick="viewMessage('${message._id}')">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button class="action-btn delete" title="Delete" onclick="confirmDeleteMessage('${message._id}', '${message.name}')">
+                            <button class="action-btn delete" title="Delete" onclick="confirmDeleteMessage('${message._id}', '${escapeHtml(message.name)}')">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </div>
@@ -112,21 +133,10 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         });
         
-        messagesList.innerHTML = html || '<tr><td colspan="5" class="text-center">No matching messages found</td></tr>';
+        messagesList.innerHTML = html;
     }
     
-    // Check if message matches search term
-    function messageMatchesSearch(message, term) {
-        term = term.toLowerCase();
-        return (
-            message.name.toLowerCase().includes(term) ||
-            message.email.toLowerCase().includes(term) ||
-            message.subject.toLowerCase().includes(term) ||
-            (message.company && message.company.toLowerCase().includes(term)) ||
-            message.message.toLowerCase().includes(term)
-        );
-    }
-    
+    // Render pagination
     function renderPagination() {
         if (totalPages <= 1) {
             messagesPagination.innerHTML = '';
@@ -138,15 +148,34 @@ document.addEventListener('DOMContentLoaded', function() {
         // Previous button
         html += `
             <button class="pagination-item ${currentPage === 1 ? 'disabled' : ''}" 
-                ${currentPage === 1 ? 'disabled' : 'onclick="changePage(' + (currentPage - 1) + ')"'}>
+                ${currentPage === 1 ? 'disabled' : `onclick="changePage(${currentPage - 1})"`}>
                 <i class="fas fa-chevron-left"></i>
             </button>
         `;
         
         // Page numbers
-        const startPage = Math.max(1, currentPage - 2);
-        const endPage = Math.min(totalPages, startPage + 4);
+        const maxPagesToShow = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
         
+        // Adjust start page if end page is maxed out
+        if (endPage === totalPages) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+        }
+        
+        // First page button if not starting from page 1
+        if (startPage > 1) {
+            html += `
+                <button class="pagination-item" onclick="changePage(1)">1</button>
+            `;
+            
+            // Add ellipsis if there's a gap
+            if (startPage > 2) {
+                html += `<span class="pagination-item disabled">...</span>`;
+            }
+        }
+        
+        // Page numbers
         for (let i = startPage; i <= endPage; i++) {
             html += `
                 <button class="pagination-item ${i === currentPage ? 'active' : ''}" 
@@ -156,10 +185,24 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         }
         
+        // Last page button if not ending at last page
+        if (endPage < totalPages) {
+            // Add ellipsis if there's a gap
+            if (endPage < totalPages - 1) {
+                html += `<span class="pagination-item disabled">...</span>`;
+            }
+            
+            html += `
+                <button class="pagination-item" onclick="changePage(${totalPages})">
+                    ${totalPages}
+                </button>
+            `;
+        }
+        
         // Next button
         html += `
             <button class="pagination-item ${currentPage === totalPages ? 'disabled' : ''}" 
-                ${currentPage === totalPages ? 'disabled' : 'onclick="changePage(' + (currentPage + 1) + ')"'}>
+                ${currentPage === totalPages ? 'disabled' : `onclick="changePage(${currentPage + 1})"`}>
                 <i class="fas fa-chevron-right"></i>
             </button>
         `;
@@ -169,41 +212,72 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Change page
     window.changePage = function(page) {
+        if (page < 1 || page > totalPages || page === currentPage) return;
         currentPage = page;
         loadMessages();
+        // Scroll to top of table
+        document.querySelector('.admin-table-responsive').scrollIntoView({ behavior: 'smooth' });
     };
     
+    // Mark message as read
+    async function markAsRead(id) {
+        try {
+            const response = await fetch(`${API_URL}/contact/${id}/read`, {
+                method: 'PUT',
+                headers: getAuthHeaders()
+            });
+            
+            await handleApiError(response);
+            
+            // Update message in local data
+            const messageIndex = messages.findIndex(m => m._id === id);
+            if (messageIndex !== -1) {
+                messages[messageIndex].status = 'read';
+                renderMessages(messages);
+            }
+            
+        } catch (error) {
+            console.error('Error marking message as read:', error);
+            // Continue anyway, not critical
+        }
+    }
+    
     // View message details
-    window.viewMessage = function(id) {
+    window.viewMessage = async function(id) {
         const message = messages.find(m => m._id === id);
         if (!message) return;
         
         // Fill modal with message details
-        messageFrom.textContent = message.name;
-        messageEmail.textContent = message.email;
-        messagePhone.textContent = message.phone;
+        messageFrom.textContent = message.name || 'N/A';
+        messageEmail.textContent = message.email || 'N/A';
+        messagePhone.textContent = message.phone || 'N/A';
         messageCompany.textContent = message.company || 'N/A';
-        messageSubject.textContent = message.subject;
+        messageSubject.textContent = message.subject || 'N/A';
         messageDate.textContent = formatDate(message.created_at);
-        messageContent.textContent = message.message;
+        messageContent.textContent = message.message || 'No message content';
         
         // Set reply email link
         replyEmailBtn.href = `mailto:${message.email}?subject=Re: ${message.subject}`;
         
         // Show modal
-        viewMessageModal.classList.add('active');
+        toggleModal(viewMessageModal, true);
+        
+        // Mark as read if it was unread
+        if (message.status === 'unread' || !message.status) {
+            await markAsRead(id);
+        }
     };
     
     // Close view modal
     if (closeViewModal) {
         closeViewModal.addEventListener('click', function() {
-            viewMessageModal.classList.remove('active');
+            toggleModal(viewMessageModal, false);
         });
     }
     
     if (closeMessageBtn) {
         closeMessageBtn.addEventListener('click', function() {
-            viewMessageModal.classList.remove('active');
+            toggleModal(viewMessageModal, false);
         });
     }
     
@@ -211,19 +285,19 @@ document.addEventListener('DOMContentLoaded', function() {
     window.confirmDeleteMessage = function(id, name) {
         messageToDelete = id;
         deleteMessageFrom.textContent = name;
-        deleteModal.classList.add('active');
+        toggleModal(deleteModal, true);
     };
     
     // Close delete modal
     if (closeDeleteModal) {
         closeDeleteModal.addEventListener('click', function() {
-            deleteModal.classList.remove('active');
+            toggleModal(deleteModal, false);
         });
     }
     
     if (cancelDelete) {
         cancelDelete.addEventListener('click', function() {
-            deleteModal.classList.remove('active');
+            toggleModal(deleteModal, false);
         });
     }
     
@@ -233,6 +307,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!messageToDelete) return;
             
             try {
+                confirmDelete.disabled = true;
+                confirmDelete.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+                
                 const response = await fetch(`${API_URL}/contact/${messageToDelete}`, {
                     method: 'DELETE',
                     headers: getAuthHeaders()
@@ -241,23 +318,52 @@ document.addEventListener('DOMContentLoaded', function() {
                 await handleApiError(response);
                 
                 // Close modal and reload messages
-                deleteModal.classList.remove('active');
+                toggleModal(deleteModal, false);
                 showToast('Message deleted successfully', 'success');
+                
+                // Reset current page if it would be empty after deletion
+                if (messages.length === 1 && currentPage > 1) {
+                    currentPage--;
+                }
+                
                 loadMessages();
                 
             } catch (error) {
                 console.error('Error deleting message:', error);
-                showToast('Failed to delete message', 'error');
-                deleteModal.classList.remove('active');
+                showToast('Failed to delete message: ' + (error.message || 'Unknown error'), 'error');
+            } finally {
+                confirmDelete.disabled = false;
+                confirmDelete.innerHTML = 'Delete';
+                toggleModal(deleteModal, false);
             }
         });
     }
     
+    // Debounced search input
+    const debouncedSearch = debounce(function() {
+        searchTerm = messageSearch.value.trim();
+        currentPage = 1; // Reset to first page on search
+        loadMessages();
+    }, 500);
+    
     // Event listeners
     if (messageSearch) {
-        messageSearch.addEventListener('input', function() {
-            searchTerm = this.value.trim();
-            renderMessages(messages);
+        messageSearch.addEventListener('input', debouncedSearch);
+        
+        // Clear search with Escape key
+        messageSearch.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                debouncedSearch();
+            }
+        });
+    }
+    
+    if (messageFilter) {
+        messageFilter.addEventListener('change', function() {
+            filterStatus = this.value;
+            currentPage = 1; // Reset to first page on filter change
+            loadMessages();
         });
     }
     
@@ -278,57 +384,134 @@ document.addEventListener('DOMContentLoaded', function() {
                 const message = messages.find(m => m._id === messageId);
                 if (message) {
                     viewMessage(messageId);
+                } else {
+                    showToast('Message not found', 'error');
                 }
-            }, 500);
+            }, 1000);
         }
     }
     
-    // Add CSS for message details
-    const messageStyle = document.createElement('style');
-    messageStyle.textContent = `
-        .message-details {
-            display: grid;
-            gap: 15px;
+    // Handle keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Escape key to close modals
+        if (e.key === 'Escape') {
+            if (viewMessageModal.classList.contains('active')) {
+                toggleModal(viewMessageModal, false);
+            } else if (deleteModal.classList.contains('active')) {
+                toggleModal(deleteModal, false);
+            }
         }
         
-        .message-detail-item {
-            display: grid;
-            grid-template-columns: 100px 1fr;
-            gap: 10px;
+        // Prevent default for our shortcuts
+        if ((e.key === 'f' || e.key === 'F') && e.ctrlKey) {
+            e.preventDefault();
+            messageSearch.focus();
+        }
+    });
+    
+    // Clipboard functionality for email
+    messageEmail.addEventListener('click', function() {
+        if (!this.textContent || this.textContent === 'N/A') return;
+        
+        const email = this.textContent;
+        navigator.clipboard.writeText(email)
+            .then(() => {
+                showToast('Email copied to clipboard', 'success');
+            })
+            .catch(() => {
+                showToast('Failed to copy email', 'error');
+            });
+    });
+    
+    // Add tooltip to email field
+    messageEmail.title = 'Click to copy email';
+    messageEmail.style.cursor = 'pointer';
+    
+    // Mark all as read functionality (if available in API)
+    async function markAllAsRead() {
+        try {
+            const response = await fetch(`${API_URL}/contact/mark-all-read`, {
+                method: 'PUT',
+                headers: getAuthHeaders()
+            });
+            
+            if (!response.ok) {
+                // If endpoint doesn't exist, just show a message
+                if (response.status === 404) {
+                    showToast('This feature is not available', 'error');
+                    return;
+                }
+                
+                await handleApiError(response);
+            }
+            
+            showToast('All messages marked as read', 'success');
+            loadMessages();
+            
+        } catch (error) {
+            console.error('Error marking all as read:', error);
+            showToast('Failed to mark messages as read', 'error');
+        }
+    }
+    
+    // Check for unread messages
+    function hasUnreadMessages() {
+        return messages.some(m => m.status === 'unread' || !m.status);
+    }
+    
+    // Auto-refresh messages periodically (if needed)
+    let autoRefreshInterval;
+    
+    function startAutoRefresh() {
+        // Refresh every 5 minutes
+        autoRefreshInterval = setInterval(() => {
+            // Only refresh if the user isn't interacting with the page
+            if (!viewMessageModal.classList.contains('active') && 
+                !deleteModal.classList.contains('active')) {
+                loadMessages();
+            }
+        }, 5 * 60 * 1000); // 5 minutes
+    }
+    
+    function stopAutoRefresh() {
+        clearInterval(autoRefreshInterval);
+    }
+    
+    // Handle window visibility changes
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') {
+            // Refresh when tab becomes visible again
+            loadMessages();
+            startAutoRefresh();
+        } else {
+            stopAutoRefresh();
+        }
+    });
+    
+    // Handle browser back button
+    window.addEventListener('popstate', function() {
+        // Close any open modals when back button is pressed
+        if (viewMessageModal.classList.contains('active')) {
+            toggleModal(viewMessageModal, false);
+        }
+        if (deleteModal.classList.contains('active')) {
+            toggleModal(deleteModal, false);
         }
         
-        .message-detail-item strong {
-            color: var(--text-primary);
-        }
-        
-        .message-detail-item span {
-            color: var(--text-secondary);
-        }
-        
-        .message-content {
-            display: block;
-        }
-        
-        .message-content strong {
-            display: block;
-            margin-bottom: 10px;
-        }
-        
-        .message-content div {
-            padding: 15px;
-            background-color: rgba(255, 255, 255, 0.03);
-            border-radius: var(--border-radius);
-            color: var(--text-secondary);
-            line-height: 1.6;
-            white-space: pre-line;
-        }
-    `;
-    document.head.appendChild(messageStyle);
+        // Check URL for message ID
+        checkUrlForMessageId();
+    });
     
     // Initialize page
     function init() {
         loadMessages();
         checkUrlForMessageId();
+        startAutoRefresh();
+        
+        // Add keyboard shortcut info to search placeholder
+        if (messageSearch) {
+            messageSearch.placeholder = "Search messages... (Ctrl+F)";
+        }
     }
     
     init();
