@@ -85,6 +85,7 @@
             </div>
             <div class="header-right">
                 <div class="admin-search">
+                    <i class="fas fa-search search-icon"></i>
                     <input type="text" id="messageSearch" placeholder="Search messages..." class="admin-form-control">
                 </div>
             </div>
@@ -94,9 +95,17 @@
         <main class="admin-main">
             <div class="admin-card">
                 <div class="admin-card-header">
-                    <h2 class="admin-card-title">All Messages</h2>
+                    <h2 class="admin-card-title">
+                        All Messages
+                        <span class="message-count" id="messageCount">0</span>
+                    </h2>
                     <div class="admin-card-actions">
-                        <button id="refreshMessages" class="btn btn-outline btn-sm">
+                        <select id="messageFilter" class="admin-form-select">
+                            <option value="all">All Messages</option>
+                            <option value="read">Read</option>
+                            <option value="unread">Unread</option>
+                        </select>
+                        <button id="refreshMessages" class="btn btn-outline">
                             <i class="fas fa-sync-alt"></i> Refresh
                         </button>
                     </div>
@@ -114,7 +123,9 @@
                         </thead>
                         <tbody id="messagesList">
                             <tr>
-                                <td colspan="5" class="text-center">Loading messages...</td>
+                                <td colspan="5" class="text-center">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading messages...
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -161,7 +172,7 @@
                         <strong>Date:</strong>
                         <span id="messageDate"></span>
                     </div>
-                    <div class="message-detail-item message-content">
+                    <div class="message-content">
                         <strong>Message:</strong>
                         <div id="messageContent"></div>
                     </div>
@@ -169,7 +180,9 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" id="closeMessageBtn">Close</button>
-                <a href="#" id="replyEmailBtn" class="btn btn-primary" target="_blank">Reply via Email</a>
+                <a href="#" id="replyEmailBtn" class="btn btn-primary" target="_blank">
+                    <i class="fas fa-reply"></i> Reply via Email
+                </a>
             </div>
         </div>
     </div>
