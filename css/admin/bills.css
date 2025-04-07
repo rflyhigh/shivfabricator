@@ -1,0 +1,100 @@
+/* Bills Management Specific Styles */
+
+/* Bill status badges */
+.bill-status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.bill-status-paid {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #4caf50;
+}
+
+.bill-status-pending {
+    background-color: rgba(255, 152, 0, 0.1);
+    color: #ff9800;
+}
+
+.bill-status-overdue {
+    background-color: rgba(244, 67, 54, 0.1);
+    color: #f44336;
+}
+
+/* Bill number and date display */
+.bill-number {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.bill-date {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Bill share button highlight */
+.action-btn.share-bill {
+    background-color: rgba(0, 198, 255, 0.1);
+    color: var(--primary-color);
+}
+
+.action-btn.share-bill:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Bill link container */
+.bill-link-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.bill-link-container input {
+    flex: 1;
+}
+
+.copy-btn {
+    flex-shrink: 0;
+}
+
+/* Bill download button in modal */
+.download-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 15px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    transition: var(--transition);
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.download-btn:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+.download-btn i {
+    margin-right: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+    .bill-link-container {
+        flex-direction: column;
+    }
+    
+    .bill-link-container .btn {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
