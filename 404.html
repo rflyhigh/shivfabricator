@@ -1896,17 +1896,6 @@ footer::before {
 
 /* Responsive Styles */
 @media (max-width: 991.98px) {
-    /* Theme toggle position adjustment */
-    .theme-toggle {
-        position: fixed;
-        top: 20px;
-        left: 20px;
-        width: 40px;
-        height: 40px;
-        font-size: 1rem;
-        z-index: 1001;
-    }
-    
     /* Mobile navigation */
     .hamburger {
         display: block;
@@ -1937,6 +1926,46 @@ footer::before {
     .nav-links li {
         margin: 12px 0;
         width: 100%;
+    }
+}
+        /* Theme Toggle Button Position */
+@media (max-width: 991.98px) {
+    .theme-toggle {
+        position: fixed;
+        top: 20px;
+        right: 80px; /* Position to left of hamburger */
+        left: auto;
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+        z-index: 1001;
+        background-color: var(--card-bg);
+        box-shadow: var(--card-shadow);
+    }
+}
+
+/* Toast notification for mobile */
+@media (max-width: 767.98px) {
+    .toast {
+        bottom: 20px;
+        right: 20px;
+        left: 20px;
+        min-width: auto;
+        max-width: none;
+        width: calc(100% - 40px);
+    }
+    
+    .toast-icon {
+        font-size: 1.2rem;
+        margin-right: 10px;
+    }
+    
+    .toast-title {
+        font-size: 0.95rem;
+    }
+    
+    .toast-message {
+        font-size: 0.85rem;
     }
 }
 
