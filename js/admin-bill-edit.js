@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const addBillItemBtn = document.getElementById('addBillItem');
     const subTotalInput = document.getElementById('sub_total');
     const gstInput = document.getElementById('gst');
+    const gstAmountDisplay = document.getElementById('gstAmount');
     const roundOffInput = document.getElementById('round_off');
     const grandTotalInput = document.getElementById('grand_total');
     const amountInWordsInput = document.getElementById('amount_in_words');
@@ -42,9 +43,8 @@ document.addEventListener('DOMContentLoaded', function() {
         loadBill();
     } else {
         // Set default date to today
-        const today = new Date();
-        const options = { day: 'numeric', month: 'long', year: 'numeric' };
-        dateInput.value = today.toLocaleDateString('en-IN', options);
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
         
         // Add default item row
         updateItemNumbers();
@@ -88,7 +88,34 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Add listener for grand total changes
+    // GST input handler with support for percentage
+    gstInput.addEventListener('input', function() {
+        const value = this.value.trim();
+        let gstAmount = 0;
+        
+        if (value.includes('%')) {
+            // Handle percentage input (e.g., "18%")
+            const percentage = parseFloat(value.replace('%', '')) || 0;
+            const subTotal = parseFloat(subTotalInput.value) || 0;
+            gstAmount = (subTotal * percentage / 100).toFixed(2);
+            
+            // Update GST amount display
+            gstAmountDisplay.textContent = `₹${parseFloat(gstAmount).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        } else {
+            // Handle direct amount input
+            gstAmount = parseFloat(value) || 0;
+            
+            // Update GST amount display
+            gstAmountDisplay.textContent = `₹${gstAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        }
+        
+        updateTotals();
+    });
+    
+    // Round off input handler
+    roundOffInput.addEventListener('input', updateTotals);
+    
+    // Grand total input handler
     grandTotalInput.addEventListener('input', function() {
         const grandTotal = parseFloat(this.value) || 0;
         convertNumberToWords(grandTotal);
@@ -99,6 +126,9 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const API_URL = window.adminUtils.API_URL;
             const headers = window.adminUtils.getAuthHeaders();
+            
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
             
             const response = await fetch(`${API_URL}/bills/${billId}`, { headers });
             
@@ -111,7 +141,21 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Set form values
             invoiceNoInput.value = bill.invoice_no;
-            dateInput.value = bill.date;
+            
+            // Format date for the date input
+            if (bill.date) {
+                try {
+                    const dateObj = new Date(bill.date);
+                    if (!isNaN(dateObj.getTime())) {
+                        dateInput.value = dateObj.toISOString().split('T')[0];
+                    } else {
+                        dateInput.value = '';
+                    }
+                } catch (e) {
+                    dateInput.value = '';
+                }
+            }
+            
             billToInput.value = bill.bill_to;
             billToAddressInput.value = bill.bill_to_address;
             companyPanInput.value = bill.company_pan || '';
@@ -130,11 +174,20 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Set totals
-            subTotalInput.value = bill.sub_total.toFixed(2);
-            gstInput.value = bill.gst ? bill.gst.toFixed(2) : '';
+            subTotalInput.value = bill.sub_total ? bill.sub_total.toFixed(2) : '0.00';
+            
+            // Set GST with original value
+            if (bill.gst) {
+                gstInput.value = bill.gst.toFixed(2);
+                gstAmountDisplay.textContent = `₹${bill.gst.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            } else {
+                gstInput.value = '';
+                gstAmountDisplay.textContent = '₹0.00';
+            }
+            
             roundOffInput.value = bill.round_off ? bill.round_off.toFixed(2) : '';
-            grandTotalInput.value = bill.grand_total.toFixed(2);
-            amountInWordsInput.value = bill.amount_in_words;
+            grandTotalInput.value = bill.grand_total ? bill.grand_total.toFixed(2) : '0.00';
+            amountInWordsInput.value = bill.amount_in_words || '';
             
             // Set feedback options
             enableFeedbackCheckbox.checked = bill.enable_feedback || false;
@@ -145,9 +198,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 projectSlugSelect.setAttribute('data-selected', bill.project_slug);
             }
             
+            // Re-enable save button
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Bill';
+            
         } catch (error) {
             console.error('Error loading bill:', error);
-            showToast('Error loading bill. Please try again.', 'error');
+            window.adminUtils.showToast('Error loading bill. Please try again.', 'error');
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Bill';
         }
     }
     
@@ -165,9 +224,15 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const projects = await response.json();
             
+            // Get the projects array from the response
+            const projectsArray = Array.isArray(projects) ? projects : (projects.projects || []);
+            
+            // Sort projects by title
+            projectsArray.sort((a, b) => a.title.localeCompare(b.title));
+            
             let options = '<option value="">Select a project</option>';
             
-            projects.forEach(project => {
+            projectsArray.forEach(project => {
                 options += `<option value="${project.slug}">${project.title}</option>`;
             });
             
@@ -187,7 +252,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function addItemRow(e, itemData = null) {
         const rowHtml = `
             <tr>
-                <td><input type="number" class="admin-form-control item-sr-no" value="1" min="1"></td>
+                <td><input type="number" class="admin-form-control item-sr-no" value="1" min="1" readonly></td>
                 <td><input type="text" class="admin-form-control item-hsn-code" placeholder="-" value="${itemData ? (itemData.hsn_code || '') : ''}"></td>
                 <td><input type="text" class="admin-form-control item-description" required placeholder="Item description" value="${itemData ? itemData.description : ''}"></td>
                 <td><input type="text" class="admin-form-control item-qty" placeholder="-" value="${itemData ? (itemData.qty || '') : ''}"></td>
@@ -195,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td><input type="number" class="admin-form-control item-rate" required step="0.01" min="0" value="${itemData ? itemData.rate : ''}"></td>
                 <td><input type="number" class="admin-form-control item-amount" required step="0.01" min="0" value="${itemData ? itemData.amount : ''}"></td>
                 <td>
-                    <button type="button" class="dynamic-field-remove action-btn delete">
+                    <button type="button" class="dynamic-field-remove action-btn delete" title="Remove Item">
                         <i class="fas fa-times"></i>
                     </button>
                 </td>
@@ -228,7 +293,7 @@ document.addEventListener('DOMContentLoaded', function() {
             updateItemNumbers();
             updateTotals();
         } else {
-            showToast('You must have at least one item', 'error');
+            window.adminUtils.showToast('You must have at least one item', 'error');
         }
     }
     
@@ -254,11 +319,28 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update subtotal field
         subTotalInput.value = subTotal.toFixed(2);
         
-        // Calculate grand total
-        const gst = parseFloat(gstInput.value) || 0;
+        // Calculate GST amount
+        let gstAmount = 0;
+        const gstValue = gstInput.value.trim();
+        
+        if (gstValue.includes('%')) {
+            // Handle percentage input (e.g., "18%")
+            const percentage = parseFloat(gstValue.replace('%', '')) || 0;
+            gstAmount = (subTotal * percentage / 100);
+            
+            // Update GST amount display
+            gstAmountDisplay.textContent = `₹${gstAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        } else {
+            // Handle direct amount input
+            gstAmount = parseFloat(gstValue) || 0;
+            gstAmountDisplay.textContent = `₹${gstAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        }
+        
+        // Get round off value
         const roundOff = parseFloat(roundOffInput.value) || 0;
         
-        const grandTotal = subTotal + gst + roundOff;
+        // Calculate grand total
+        const grandTotal = subTotal + gstAmount + roundOff;
         grandTotalInput.value = grandTotal.toFixed(2);
         
         // Update amount in words
@@ -286,7 +368,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return tens[ten] + (unit !== 0 ? ' ' + ones[unit] : '');
         }
         
-        // Main conversion function
+        // Main conversion function for Indian numbering system
         function convert(num) {
             if (num === 0) {
                 return 'Zero';
@@ -297,8 +379,10 @@ document.addEventListener('DOMContentLoaded', function() {
             num = Math.abs(num);
             
             // Split into integer and decimal parts
-            const parts = num.toString().split('.');
+            const numStr = num.toFixed(2);
+            const parts = numStr.split('.');
             const integerPart = parseInt(parts[0]);
+            const decimalPart = parseInt(parts[1]);
             
             let result = '';
             
@@ -309,7 +393,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const crore = Math.floor(integerPart / 10000000);
                 const lakh = Math.floor((integerPart % 10000000) / 100000);
                 const thousand = Math.floor((integerPart % 100000) / 1000);
-                const remaining = integerPart % 1000;
+                const hundred = Math.floor((integerPart % 1000) / 100);
+                const remaining = integerPart % 100;
                 
                 if (crore > 0) {
                     result += convertLessThanOneThousand(crore) + ' Crore ';
@@ -323,15 +408,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     result += convertLessThanOneThousand(thousand) + ' Thousand ';
                 }
                 
+                if (hundred > 0) {
+                    result += ones[hundred] + ' Hundred ';
+                }
+                
                 if (remaining > 0) {
+                    if (result !== '') {
+                        result += 'and ';
+                    }
                     result += convertLessThanOneThousand(remaining);
                 }
                 
                 result = result.trim();
             }
             
-            // Add 'Only' suffix
-            result += ' Only';
+            // Add paise if there are any
+            if (decimalPart > 0) {
+                result += ' and ' + convertLessThanOneThousand(decimalPart) + ' Paise';
+            }
+            
+            // Add 'Rupees' prefix and 'Only' suffix
+            result = 'Rupees ' + result + ' Only';
             
             // Add negative prefix if needed
             return (negative ? 'Negative ' : '') + result;
@@ -351,6 +448,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            // Show saving state
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            
+            // Process GST input for saving
+            let gstValue = 0;
+            const gstInputValue = gstInput.value.trim();
+            
+            if (gstInputValue.includes('%')) {
+                // Convert percentage to amount
+                const percentage = parseFloat(gstInputValue.replace('%', '')) || 0;
+                const subTotal = parseFloat(subTotalInput.value) || 0;
+                gstValue = (subTotal * percentage / 100);
+            } else {
+                // Use direct amount
+                gstValue = parseFloat(gstInputValue) || 0;
+            }
+            
             // Gather form data
             const formData = {
                 invoice_no: invoiceNoInput.value,
@@ -363,7 +478,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 other_terms: otherTermsInput.value || null,
                 items: [],
                 sub_total: parseFloat(subTotalInput.value),
-                gst: gstInput.value ? parseFloat(gstInput.value) : null,
+                gst: gstValue || null,
                 round_off: roundOffInput.value ? parseFloat(roundOffInput.value) : null,
                 grand_total: parseFloat(grandTotalInput.value),
                 amount_in_words: amountInWordsInput.value,
@@ -434,7 +549,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
         } catch (error) {
             console.error('Error saving bill:', error);
-            window.adminUtils.showToast('Error saving bill. Please try again.', 'error');
+            window.adminUtils.showToast('Error saving bill: ' + (error.message || 'Please try again'), 'error');
+            
+            // Reset save button
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Bill';
         }
     }
 });
