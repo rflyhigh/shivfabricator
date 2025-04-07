@@ -385,276 +385,457 @@ def get_feedback_url(code):
 def get_bill_url(bill_code):
     return f"{BASE_URL}/bill?code={bill_code}"
 
-def generate_bill_pdf(bill: BillInDB):
-    """Generate a PDF invoice for the given bill"""
-    from reportlab.lib import colors
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib.units import inch
+from xhtml2pdf import pisa
+from io import BytesIO
+import jinja2
+from pathlib import Path
+
+def generate_bill_pdf_with_xhtml2pdf(bill: BillInDB):
+    """Generate a PDF invoice for the given bill using xhtml2pdf"""
+    # Create a Jinja2 template environment
+    template_dir = Path(__file__).parent / "templates"
+    if not template_dir.exists():
+        template_dir.mkdir(parents=True)
     
-    buffer = BytesIO()
-    
-    # Create PDF with better styling
-    c = canvas.Canvas(buffer, pagesize=letter)
-    width, height = letter
-    
-    # Set up some constants
-    margin = 50
-    col_width = width - 2 * margin
-    
-    # Add a light blue header
-    c.setFillColorRGB(0.95, 0.98, 1)  # Very light blue
-    c.rect(0, height - 120, width, 120, fill=True, stroke=False)
-    
-    # Company Logo (if available) or Name
-    c.setFillColorRGB(0, 0, 0.5)  # Dark blue
-    c.setFont("Helvetica-Bold", 22)
-    c.drawString(margin, height - 50, "SHIVA FABRICATION")
-    
-    # Company details with better formatting
-    c.setFillColorRGB(0, 0, 0)  # Black text
-    c.setFont("Helvetica", 9)
-    c.drawString(margin, height - 65, "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015")
-    c.drawString(margin, height - 78, "Contact: 8805954132 / 9096553951")
-    c.drawString(margin, height - 91, "Email: shivfabricator1@gmail.com")
-    
-    # Invoice title
-    c.setFont("Helvetica-Bold", 18)
-    c.setFillColorRGB(0, 0.78, 1)  # Primary blue color
-    invoice_text = "INVOICE"
-    invoice_width = c.stringWidth(invoice_text, "Helvetica-Bold", 18)
-    c.drawString(width - margin - invoice_width, height - 50, invoice_text)
-    
-    # Invoice details
-    c.setFillColorRGB(0, 0, 0)  # Black text
-    c.setFont("Helvetica-Bold", 10)
-    c.drawString(width - margin - 150, height - 70, f"Invoice No: {bill.invoice_no}")
-    c.setFont("Helvetica", 10)
-    c.drawString(width - margin - 150, height - 85, f"Date: {bill.date}")
-    
-    # Thin separator line
-    c.setStrokeColorRGB(0.8, 0.8, 0.8)  # Light gray
-    c.setLineWidth(0.5)
-    c.line(margin, height - 130, width - margin, height - 130)
-    
-    # Bill To section
-    y_position = height - 150
-    c.setFont("Helvetica-Bold", 11)
-    c.drawString(margin, y_position, "Bill To:")
-    c.setFont("Helvetica-Bold", 10)
-    y_position -= 15
-    c.drawString(margin, y_position, bill.bill_to)
-    c.setFont("Helvetica", 9)
-    
-    # Handle multiline addresses
-    address_lines = bill.bill_to_address.split(', ')
-    for line in address_lines:
-        y_position -= 12
-        c.drawString(margin, y_position, line)
-    
-    # Invoice details on right side
-    details_y = height - 150
-    c.setFont("Helvetica-Bold", 11)
-    c.drawString(width - margin - 200, details_y, "Invoice Details:")
-    c.setFont("Helvetica", 9)
-    
-    details_y -= 15
-    if bill.company_pan:
-        c.drawString(width - margin - 200, details_y, f"Company PAN: {bill.company_pan}")
-        details_y -= 12
-    
-    if bill.suppliers_ref_no:
-        c.drawString(width - margin - 200, details_y, f"Supplier's Ref No: {bill.suppliers_ref_no}")
-        details_y -= 12
-    
-    if bill.buyers_order_no:
-        c.drawString(width - margin - 200, details_y, f"Buyer's Order No: {bill.buyers_order_no}")
-        details_y -= 12
-    
-    if bill.other_terms:
-        c.drawString(width - margin - 200, details_y, f"Other Terms: {bill.other_terms}")
-    
-    # Items Table
-    y_position = min(y_position, details_y) - 30
-    
-    # Table header with light blue background
-    c.setFillColorRGB(0.9, 0.95, 1)  # Light blue
-    c.rect(margin, y_position - 15, width - 2 * margin, 20, fill=True, stroke=False)
-    
-    # Define column widths (as percentages of available width)
-    col_widths = [0.07, 0.13, 0.4, 0.08, 0.08, 0.12, 0.12]
-    col_positions = [margin]
-    
-    for i in range(len(col_widths)):
-        col_positions.append(col_positions[-1] + col_widths[i] * col_width)
-    
-    # Draw table headers - black text
-    c.setFillColorRGB(0, 0, 0)  # Black
-    c.setFont("Helvetica-Bold", 9)
-    
-    headers = ["Sr.No.", "HSN/SAC", "Description", "Qty", "Unit", "Rate", "Amount"]
-    for i, header in enumerate(headers):
-        c.drawString(col_positions[i] + 3, y_position - 10, header)
-    
-    # Draw header border
-    c.setStrokeColorRGB(0.8, 0.8, 0.8)  # Light gray
-    c.setLineWidth(0.5)
-    c.line(margin, y_position - 15, width - margin, y_position - 15)
-    c.line(margin, y_position + 5, width - margin, y_position + 5)
-    
-    # Draw vertical lines
-    for pos in col_positions:
-        c.line(pos, y_position - 15, pos, y_position + 5)
-    c.line(width - margin, y_position - 15, width - margin, y_position + 5)
-    
-    # Draw table items
-    y_position -= 30
-    c.setFont("Helvetica", 9)
-    
-    row_height = 20
-    for item in bill.items:
-        row_top = y_position + row_height/2
-        row_bottom = y_position - row_height/2
+    # Create bill HTML template if it doesn't exist
+    template_path = template_dir / "bill_template.html"
+    if not template_path.exists():
+        with open(template_path, "w") as f:
+            f.write('''
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice #{{ bill.invoice_no }}</title>
+    <style>
+        @page {
+            size: letter portrait;
+            margin: 1cm;
+            @frame footer {
+                -pdf-frame-content: footerContent;
+                bottom: 0.5cm;
+                margin-left: 1cm;
+                margin-right: 1cm;
+                height: 0.5cm;
+            }
+        }
         
-        # Draw item details
-        c.drawString(col_positions[0] + 3, y_position, str(item.sr_no))
-        c.drawString(col_positions[1] + 3, y_position, item.hsn_code or "-")
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #333;
+        }
         
-        # Description
-        c.drawString(col_positions[2] + 3, y_position, item.description)
+        .bill-header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
         
-        # Qty and Unit
-        c.drawString(col_positions[3] + 3, y_position, item.qty or "-")
-        c.drawString(col_positions[4] + 3, y_position, item.unit or "-")
+        .bill-company {
+            width: 60%;
+            float: left;
+        }
         
-        # Rate and Amount - using "Rs." instead of ₹ symbol
-        c.setFont("Helvetica", 9)
+        .bill-title {
+            width: 40%;
+            float: right;
+            text-align: right;
+        }
         
-        # Right-align the rate and amount
-        rate_text = f"Rs. {item.rate:,.2f}"
-        amount_text = f"Rs. {item.amount:,.2f}"
+        .bill-company h2 {
+            font-size: 18pt;
+            color: #2c3e50;
+            margin: 0 0 10px 0;
+        }
         
-        # Use drawRightString for proper alignment
-        c.drawRightString(col_positions[6] + col_widths[6] * col_width - 3, y_position, amount_text)
-        c.drawRightString(col_positions[5] + col_widths[5] * col_width - 3, y_position, rate_text)
+        .bill-company p {
+            margin: 5px 0;
+            color: #555;
+            font-size: 9pt;
+        }
         
-        # Draw horizontal line below the row
-        c.line(margin, row_bottom, width - margin, row_bottom)
+        .bill-title h1 {
+            font-size: 22pt;
+            color: #00c6ff;
+            margin: 0 0 10px 0;
+        }
         
-        # Draw vertical lines for the row
-        for pos in col_positions:
-            c.line(pos, row_bottom, pos, row_top)
-        c.line(width - margin, row_bottom, width - margin, row_top)
+        .bill-title p {
+            margin: 5px 0;
+        }
         
-        # Move to next row
-        y_position -= row_height
+        .bill-details {
+            padding: 20px;
+            clear: both;
+        }
+        
+        .bill-info-row {
+            margin-bottom: 30px;
+        }
+        
+        .bill-to {
+            width: 50%;
+            float: left;
+        }
+        
+        .bill-meta {
+            width: 50%;
+            float: right;
+        }
+        
+        .bill-to h3, .bill-meta h3 {
+            font-size: 12pt;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .bill-to p {
+            margin: 5px 0;
+            color: #555;
+        }
+        
+        .bill-meta-item {
+            margin-bottom: 10px;
+        }
+        
+        .bill-meta-label {
+            font-weight: bold;
+            color: #555;
+            width: 40%;
+            float: left;
+        }
+        
+        .bill-meta-value {
+            color: #333;
+            width: 60%;
+            float: right;
+        }
+        
+        .bill-items {
+            margin-bottom: 30px;
+            clear: both;
+        }
+        
+        .bill-items table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .bill-items th {
+            background-color: #f8f9fa;
+            color: #333;
+            padding: 10px;
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .bill-items td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            color: #555;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .bill-total {
+            margin-top: 20px;
+            border-top: 2px solid #eee;
+            padding-top: 20px;
+        }
+        
+        .bill-total-row {
+            margin-bottom: 10px;
+            text-align: right;
+        }
+        
+        .bill-total-label {
+            display: inline-block;
+            width: 150px;
+            text-align: right;
+            padding-right: 20px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .bill-total-value {
+            display: inline-block;
+            width: 150px;
+            text-align: right;
+            color: #333;
+        }
+        
+        .bill-grand-total {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .bill-words {
+            margin: 20px 0;
+            font-style: italic;
+            color: #555;
+        }
+        
+        .bill-footer {
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+            clear: both;
+        }
+        
+        .bill-signature {
+            width: 40%;
+            text-align: center;
+            float: left;
+        }
+        
+        .bill-signature:last-child {
+            float: right;
+        }
+        
+        .bill-signature-title {
+            margin-bottom: 50px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .bill-signature-line {
+            width: 100%;
+            border-top: 1px solid #555;
+            margin-bottom: 10px;
+        }
+        
+        .bill-signature-name {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .bill-notes {
+            margin-top: 30px;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 9pt;
+            color: #555;
+            clear: both;
+        }
+        
+        .bill-bank {
+            margin-top: 30px;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            clear: both;
+        }
+        
+        .bill-bank h3 {
+            font-size: 11pt;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .bill-bank p {
+            margin: 5px 0;
+            color: #555;
+        }
+        
+        .feedback-link {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 8pt;
+            color: #777;
+        }
+        
+        .clearfix {
+            clear: both;
+        }
+    </style>
+</head>
+<body>
+    <div class="bill-container">
+        <div class="bill-header">
+            <div class="bill-company">
+                <h2>SHIVA FABRICATION</h2>
+                <p>Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015</p>
+                <p>Contact: 8805954132 / 9096553951</p>
+                <p>Email: shivfabricator1@gmail.com</p>
+            </div>
+            <div class="bill-title">
+                <h1>INVOICE</h1>
+                <p><strong>Invoice No:</strong> {{ bill.invoice_no }}</p>
+                <p><strong>Date:</strong> {{ bill.date }}</p>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+        
+        <div class="bill-details">
+            <div class="bill-info-row">
+                <div class="bill-to">
+                    <h3>Bill To</h3>
+                    <p><strong>{{ bill.bill_to }}</strong></p>
+                    <p>{{ bill.bill_to_address }}</p>
+                </div>
+                
+                <div class="bill-meta">
+                    <h3>Invoice Details</h3>
+                    {% if bill.company_pan %}
+                    <div class="bill-meta-item">
+                        <div class="bill-meta-label">Company PAN:</div>
+                        <div class="bill-meta-value">{{ bill.company_pan }}</div>
+                        <div class="clearfix"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if bill.suppliers_ref_no %}
+                    <div class="bill-meta-item">
+                        <div class="bill-meta-label">Supplier's Ref No:</div>
+                        <div class="bill-meta-value">{{ bill.suppliers_ref_no }}</div>
+                        <div class="clearfix"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if bill.buyers_order_no %}
+                    <div class="bill-meta-item">
+                        <div class="bill-meta-label">Buyer's Order No:</div>
+                        <div class="bill-meta-value">{{ bill.buyers_order_no }}</div>
+                        <div class="clearfix"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if bill.other_terms %}
+                    <div class="bill-meta-item">
+                        <div class="bill-meta-label">Other Terms:</div>
+                        <div class="bill-meta-value">{{ bill.other_terms }}</div>
+                        <div class="clearfix"></div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="clearfix"></div>
+            </div>
+            
+            <div class="bill-items">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Sr.No.</th>
+                            <th>HSN/SAC</th>
+                            <th>Description</th>
+                            <th>Qty</th>
+                            <th>Unit</th>
+                            <th class="text-right">Rate</th>
+                            <th class="text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in bill.items %}
+                        <tr>
+                            <td>{{ item.sr_no }}</td>
+                            <td>{{ item.hsn_code or '-' }}</td>
+                            <td>{{ item.description }}</td>
+                            <td>{{ item.qty or '-' }}</td>
+                            <td>{{ item.unit or '-' }}</td>
+                            <td class="text-right">₹{{ "%.2f"|format(item.rate) }}</td>
+                            <td class="text-right">₹{{ "%.2f"|format(item.amount) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="bill-total">
+                <div class="bill-total-row">
+                    <div class="bill-total-label">Sub Total:</div>
+                    <div class="bill-total-value">₹{{ "%.2f"|format(bill.sub_total) }}</div>
+                </div>
+                
+                {% if bill.gst %}
+                <div class="bill-total-row">
+                    <div class="bill-total-label">GST:</div>
+                    <div class="bill-total-value">₹{{ "%.2f"|format(bill.gst) }}</div>
+                </div>
+                {% endif %}
+                
+                {% if bill.round_off %}
+                <div class="bill-total-row">
+                    <div class="bill-total-label">Round Off:</div>
+                    <div class="bill-total-value">₹{{ "%.2f"|format(bill.round_off) }}</div>
+                </div>
+                {% endif %}
+                
+                <div class="bill-total-row">
+                    <div class="bill-total-label bill-grand-total">Grand Total:</div>
+                    <div class="bill-total-value bill-grand-total">₹{{ "%.2f"|format(bill.grand_total) }}</div>
+                </div>
+            </div>
+            
+            <div class="bill-words">
+                <strong>Amount in words:</strong> {{ bill.amount_in_words }}
+            </div>
+            
+            <div class="bill-footer">
+                <div class="bill-signature">
+                    <div class="bill-signature-title">Customer Seal and Signature</div>
+                    <div class="bill-signature-line"></div>
+                </div>
+                
+                <div class="bill-signature">
+                    <div class="bill-signature-title">For SHIVA FABRICATION</div>
+                    <div class="bill-signature-line"></div>
+                    <div class="bill-signature-name">Proprietor</div>
+                </div>
+                <div class="clearfix"></div>
+            </div>
+            
+            <div class="bill-bank">
+                <h3>Bank Details</h3>
+                <p>Name of the Beneficiary: SHIVA FABRICATION</p>
+                <p>A/C NO. 110504180001097</p>
+                <p>IFSC CODE: SVCB0000105</p>
+            </div>
+            
+            <div class="bill-notes">
+                <p><strong>Declaration:</strong> We declare that this invoice shows the actual price of the labour work described and that all particulars are true and correct.</p>
+            </div>
+            
+            {% if bill.enable_feedback and bill.feedback_code %}
+            <div class="feedback-link">
+                <p>Please provide your feedback at: {{ base_url }}/feedback?code={{ bill.feedback_code }}</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div id="footerContent">
+            <p style="text-align: center; font-size: 8pt; color: #777;">Page <pdf:pagenumber> of <pdf:pagecount></p>
+        </div>
+    </div>
+</body>
+</html>
+            ''')
     
-    # Totals section
-    y_position -= 20
+    # Create a Jinja2 environment and load the template
+    env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
+    template = env.get_template("bill_template.html")
     
-    # Sub Total
-    c.setFont("Helvetica-Bold", 9)
-    c.drawString(col_positions[5], y_position, "Sub Total:")
-    sub_total_text = f"Rs. {bill.sub_total:,.2f}"
-    c.drawRightString(width - margin - 3, y_position, sub_total_text)
+    # Render the template with the bill data
+    base_url = os.getenv("BASE_URL", "https://shivafabrications.versz.fun")
+    html_content = template.render(bill=bill, base_url=base_url)
     
-    y_position -= 15
+    # Create PDF using xhtml2pdf
+    pdf_buffer = BytesIO()
+    pisa.CreatePDF(
+        src=html_content,
+        dest=pdf_buffer
+    )
+    pdf_buffer.seek(0)
     
-    # GST if applicable
-    if bill.gst:
-        c.drawString(col_positions[5], y_position, "GST:")
-        gst_text = f"Rs. {bill.gst:,.2f}"
-        c.drawRightString(width - margin - 3, y_position, gst_text)
-        y_position -= 15
-    
-    # Round off if applicable
-    if bill.round_off:
-        c.drawString(col_positions[5], y_position, "Round Off:")
-        round_off_text = f"Rs. {bill.round_off:,.2f}"
-        c.drawRightString(width - margin - 3, y_position, round_off_text)
-        y_position -= 15
-    
-    # Grand Total with light blue background
-    c.setFillColorRGB(0.9, 0.95, 1)  # Light blue
-    c.rect(col_positions[5] - 5, y_position - 5, width - margin - col_positions[5] + 5, 20, fill=True, stroke=False)
-    
-    c.setFillColorRGB(0, 0, 0)  # Black text
-    c.setFont("Helvetica-Bold", 10)
-    c.drawString(col_positions[5], y_position, "Grand Total:")
-    total_text = f"Rs. {bill.grand_total:,.2f}"
-    c.drawRightString(width - margin - 3, y_position, total_text)
-    
-    # Draw a line above the grand total
-    c.setLineWidth(0.5)
-    c.line(col_positions[5] - 5, y_position + 15, width - margin, y_position + 15)
-    
-    # Amount in words
-    y_position -= 30
-    c.setFont("Helvetica-Bold", 9)
-    c.drawString(margin, y_position, "Amount in words:")
-    c.setFont("Helvetica-Oblique", 9)
-    c.drawString(margin + 100, y_position, bill.amount_in_words)
-    
-    # Bank details section with light background
-    y_position -= 30
-    c.setFillColorRGB(0.95, 0.95, 0.95)  # Very light gray
-    c.rect(margin, y_position - 40, width - 2 * margin, 50, fill=True, stroke=False)
-    
-    c.setFillColorRGB(0, 0, 0)  # Black text
-    c.setFont("Helvetica-Bold", 9)
-    c.drawString(margin + 5, y_position, "Bank Details:")
-    c.setFont("Helvetica", 9)
-    y_position -= 15
-    c.drawString(margin + 5, y_position, "Name of the Beneficiary: SHIVA FABRICATION")
-    y_position -= 12
-    c.drawString(margin + 5, y_position, "A/C NO. 110504180001097")
-    y_position -= 12
-    c.drawString(margin + 5, y_position, "IFSC CODE: SVCB0000105")
-    
-    # Declaration
-    y_position -= 30
-    c.setFont("Helvetica-Bold", 9)
-    c.drawString(margin, y_position, "Declaration:")
-    c.setFont("Helvetica", 8)
-    y_position -= 12
-    c.drawString(margin, y_position, "We declare that this invoice shows the actual price of the labour work described and that all particulars are true and correct.")
-    
-    # Signatures
-    y_position -= 50
-    
-    # Thin line above signatures
-    c.setStrokeColorRGB(0.8, 0.8, 0.8)  # Light gray
-    c.line(margin, y_position + 10, width - margin, y_position + 10)
-    
-    # Customer signature on left
-    c.setFont("Helvetica-Bold", 9)
-    c.drawString(margin + 30, y_position, "Customer Seal and Signature")
-    c.setStrokeColorRGB(0.5, 0.5, 0.5)  # Gray
-    c.line(margin, y_position - 30, margin + 200, y_position - 30)
-    
-    # Company signature on right
-    c.drawString(width - margin - 170, y_position, "For SHIVA FABRICATION")
-    c.line(width - margin - 200, y_position - 30, width - margin, y_position - 30)
-    c.setFont("Helvetica", 9)
-    c.drawString(width - margin - 170, y_position - 40, "Proprietor")
-    
-    # If feedback is enabled, add the feedback URL
-    if bill.enable_feedback and bill.feedback_code:
-        y_position -= 80
-        c.setFont("Helvetica", 8)
-        # Construct feedback URL directly instead of using the function
-        base_url = os.getenv("BASE_URL", "https://shivafabrications.versz.fun")
-        feedback_url = f"{base_url}/feedback?code={bill.feedback_code}"
-        c.drawString(margin, y_position, f"Please provide your feedback at: {feedback_url}")
-    
-    # Add a footer with page number
-    c.setFont("Helvetica", 8)
-    c.setFillColorRGB(0.5, 0.5, 0.5)  # Gray
-    c.drawString(width/2 - 70, 20, "Thank you for your business!")
-    c.drawString(width - margin - 60, 20, "Page 1 of 1")
-    
-    c.save()
-    buffer.seek(0)
-    return buffer
+    return pdf_buffer
 
 # API routes
 @app.post("/api/token", response_model=Token)
@@ -1074,7 +1255,9 @@ async def download_bill_pdf(bill_id: str):
     
     # Convert to BillInDB model
     bill_model = BillInDB(**serialize_mongo_doc(bill))
-    pdf_buffer = generate_bill_pdf(bill_model)
+    
+    # Use xhtml2pdf instead of ReportLab
+    pdf_buffer = generate_bill_pdf_with_xhtml2pdf(bill_model)
     
     # Create a temporary file
     temp_file = f"/tmp/{bill['bill_code']}.pdf"
