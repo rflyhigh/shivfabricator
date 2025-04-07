@@ -21,13 +21,11 @@ from dotenv import load_dotenv
 import aiohttp
 import asyncio
 import uuid
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
-from reportlab.platypus import Table, TableStyle
 from io import BytesIO
 import json
 from fastapi.encoders import jsonable_encoder
+import jinja2
+from pathlib import Path
 
 # Load environment variables
 load_dotenv()
@@ -41,6 +39,7 @@ ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 IMGBB_API_KEY = os.getenv("IMGBB_API_KEY")
 BASE_URL = os.getenv("BASE_URL", "https://shivafabrications.versz.fun")
+BROWSERLESS_API_KEY = os.getenv("BROWSERLESS_API_KEY")
 
 # FastAPI app
 app = FastAPI(title="Shiva Fabrications API")
@@ -385,63 +384,106 @@ def get_feedback_url(code):
 def get_bill_url(bill_code):
     return f"{BASE_URL}/bill?code={bill_code}"
 
-from xhtml2pdf import pisa
-from io import BytesIO
-import jinja2
-from pathlib import Path
+# Browserless PDF generation
+async def generate_pdf_with_browserless(html_content: str) -> BytesIO:
+    """
+    Generate a PDF using Browserless.io headless Chrome service
+    """
+    browserless_url = f"https://chrome.browserless.io/pdf?token={BROWSERLESS_API_KEY}"
+    
+    # Configure PDF options
+    payload = {
+        "html": html_content,
+        "options": {
+            "printBackground": True,
+            "format": "Letter",
+            "margin": {
+                "top": "1cm",
+                "right": "1cm",
+                "bottom": "1cm",
+                "left": "1cm"
+            },
+            "preferCSSPageSize": True
+        }
+    }
+    
+    # Send request to Browserless
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                browserless_url,
+                headers={"Content-Type": "application/json"},
+                json=payload,
+                timeout=30
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    print(f"Browserless error: {response.status} - {error_text}")
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"PDF generation failed: {error_text}"
+                    )
+                
+                # Return PDF content as BytesIO object
+                pdf_content = await response.read()
+                pdf_buffer = BytesIO(pdf_content)
+                pdf_buffer.seek(0)
+                return pdf_buffer
+                
+    except Exception as e:
+        print(f"Error generating PDF: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"PDF generation failed: {str(e)}"
+        )
 
-def generate_bill_pdf_with_xhtml2pdf(bill: BillInDB):
-    """Generate a PDF invoice for the given bill using xhtml2pdf"""
+def render_bill_template(bill):
+    """Render HTML bill template using Jinja2"""
     # Create a Jinja2 template environment
     template_dir = Path(__file__).parent / "templates"
     if not template_dir.exists():
         template_dir.mkdir(parents=True)
     
-    # Create bill HTML template if it doesn't exist
+    # Create bill HTML template
     template_path = template_dir / "bill_template.html"
-    if not template_path.exists():
-        with open(template_path, "w") as f:
-            f.write('''
+    with open(template_path, "w") as f:
+        f.write('''
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice #{{ bill.invoice_no }}</title>
     <style>
         @page {
-            size: letter portrait;
+            size: letter;
             margin: 1cm;
-            @frame footer {
-                -pdf-frame-content: footerContent;
-                bottom: 0.5cm;
-                margin-left: 1cm;
-                margin-right: 1cm;
-                height: 0.5cm;
-            }
         }
         
         body {
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: 'Helvetica', 'Arial', sans-serif;
             font-size: 10pt;
             line-height: 1.4;
             color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .bill-container {
+            max-width: 800px;
+            margin: 0 auto;
         }
         
         .bill-header {
             background-color: #f8f9fa;
             padding: 20px;
             border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
         }
         
         .bill-company {
-            width: 60%;
-            float: left;
-        }
-        
-        .bill-title {
-            width: 40%;
-            float: right;
-            text-align: right;
+            flex: 1;
         }
         
         .bill-company h2 {
@@ -456,6 +498,10 @@ def generate_bill_pdf_with_xhtml2pdf(bill: BillInDB):
             font-size: 9pt;
         }
         
+        .bill-title {
+            text-align: right;
+        }
+        
         .bill-title h1 {
             font-size: 22pt;
             color: #00c6ff;
@@ -468,21 +514,20 @@ def generate_bill_pdf_with_xhtml2pdf(bill: BillInDB):
         
         .bill-details {
             padding: 20px;
-            clear: both;
         }
         
         .bill-info-row {
+            display: flex;
+            justify-content: space-between;
             margin-bottom: 30px;
         }
         
         .bill-to {
-            width: 50%;
-            float: left;
+            flex: 1;
         }
         
         .bill-meta {
-            width: 50%;
-            float: right;
+            flex: 1;
         }
         
         .bill-to h3, .bill-meta h3 {
@@ -499,25 +544,22 @@ def generate_bill_pdf_with_xhtml2pdf(bill: BillInDB):
         }
         
         .bill-meta-item {
+            display: flex;
+            justify-content: space-between;
             margin-bottom: 10px;
         }
         
         .bill-meta-label {
             font-weight: bold;
             color: #555;
-            width: 40%;
-            float: left;
         }
         
         .bill-meta-value {
             color: #333;
-            width: 60%;
-            float: right;
         }
         
         .bill-items {
             margin-bottom: 30px;
-            clear: both;
         }
         
         .bill-items table {
@@ -551,12 +593,12 @@ def generate_bill_pdf_with_xhtml2pdf(bill: BillInDB):
         }
         
         .bill-total-row {
+            display: flex;
+            justify-content: flex-end;
             margin-bottom: 10px;
-            text-align: right;
         }
         
         .bill-total-label {
-            display: inline-block;
             width: 150px;
             text-align: right;
             padding-right: 20px;
@@ -565,7 +607,6 @@ def generate_bill_pdf_with_xhtml2pdf(bill: BillInDB):
         }
         
         .bill-total-value {
-            display: inline-block;
             width: 150px;
             text-align: right;
             color: #333;
@@ -584,20 +625,16 @@ def generate_bill_pdf_with_xhtml2pdf(bill: BillInDB):
         }
         
         .bill-footer {
+            display: flex;
+            justify-content: space-between;
             margin-top: 50px;
             padding-top: 30px;
             border-top: 1px solid #eee;
-            clear: both;
         }
         
         .bill-signature {
             width: 40%;
             text-align: center;
-            float: left;
-        }
-        
-        .bill-signature:last-child {
-            float: right;
         }
         
         .bill-signature-title {
@@ -624,7 +661,6 @@ def generate_bill_pdf_with_xhtml2pdf(bill: BillInDB):
             border-radius: 5px;
             font-size: 9pt;
             color: #555;
-            clear: both;
         }
         
         .bill-bank {
@@ -632,7 +668,6 @@ def generate_bill_pdf_with_xhtml2pdf(bill: BillInDB):
             background-color: #f8f9fa;
             padding: 15px;
             border-radius: 5px;
-            clear: both;
         }
         
         .bill-bank h3 {
@@ -653,8 +688,11 @@ def generate_bill_pdf_with_xhtml2pdf(bill: BillInDB):
             color: #777;
         }
         
-        .clearfix {
-            clear: both;
+        .page-number {
+            text-align: center;
+            font-size: 8pt;
+            color: #777;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -672,7 +710,6 @@ def generate_bill_pdf_with_xhtml2pdf(bill: BillInDB):
                 <p><strong>Invoice No:</strong> {{ bill.invoice_no }}</p>
                 <p><strong>Date:</strong> {{ bill.date }}</p>
             </div>
-            <div class="clearfix"></div>
         </div>
         
         <div class="bill-details">
@@ -687,37 +724,32 @@ def generate_bill_pdf_with_xhtml2pdf(bill: BillInDB):
                     <h3>Invoice Details</h3>
                     {% if bill.company_pan %}
                     <div class="bill-meta-item">
-                        <div class="bill-meta-label">Company PAN:</div>
-                        <div class="bill-meta-value">{{ bill.company_pan }}</div>
-                        <div class="clearfix"></div>
+                        <span class="bill-meta-label">Company PAN:</span>
+                        <span class="bill-meta-value">{{ bill.company_pan }}</span>
                     </div>
                     {% endif %}
                     
                     {% if bill.suppliers_ref_no %}
                     <div class="bill-meta-item">
-                        <div class="bill-meta-label">Supplier's Ref No:</div>
-                        <div class="bill-meta-value">{{ bill.suppliers_ref_no }}</div>
-                        <div class="clearfix"></div>
+                        <span class="bill-meta-label">Supplier's Ref No:</span>
+                        <span class="bill-meta-value">{{ bill.suppliers_ref_no }}</span>
                     </div>
                     {% endif %}
                     
                     {% if bill.buyers_order_no %}
                     <div class="bill-meta-item">
-                        <div class="bill-meta-label">Buyer's Order No:</div>
-                        <div class="bill-meta-value">{{ bill.buyers_order_no }}</div>
-                        <div class="clearfix"></div>
+                        <span class="bill-meta-label">Buyer's Order No:</span>
+                        <span class="bill-meta-value">{{ bill.buyers_order_no }}</span>
                     </div>
                     {% endif %}
                     
                     {% if bill.other_terms %}
                     <div class="bill-meta-item">
-                        <div class="bill-meta-label">Other Terms:</div>
-                        <div class="bill-meta-value">{{ bill.other_terms }}</div>
-                        <div class="clearfix"></div>
+                        <span class="bill-meta-label">Other Terms:</span>
+                        <span class="bill-meta-value">{{ bill.other_terms }}</span>
                     </div>
                     {% endif %}
                 </div>
-                <div class="clearfix"></div>
             </div>
             
             <div class="bill-items">
@@ -790,7 +822,6 @@ def generate_bill_pdf_with_xhtml2pdf(bill: BillInDB):
                     <div class="bill-signature-line"></div>
                     <div class="bill-signature-name">Proprietor</div>
                 </div>
-                <div class="clearfix"></div>
             </div>
             
             <div class="bill-bank">
@@ -809,15 +840,15 @@ def generate_bill_pdf_with_xhtml2pdf(bill: BillInDB):
                 <p>Please provide your feedback at: {{ base_url }}/feedback?code={{ bill.feedback_code }}</p>
             </div>
             {% endif %}
-        </div>
-        
-        <div id="footerContent">
-            <p style="text-align: center; font-size: 8pt; color: #777;">Page <pdf:pagenumber> of <pdf:pagecount></p>
+            
+            <div class="page-number">
+                Page 1 of 1
+            </div>
         </div>
     </div>
 </body>
 </html>
-            ''')
+        ''')
     
     # Create a Jinja2 environment and load the template
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
@@ -827,15 +858,7 @@ def generate_bill_pdf_with_xhtml2pdf(bill: BillInDB):
     base_url = os.getenv("BASE_URL", "https://shivafabrications.versz.fun")
     html_content = template.render(bill=bill, base_url=base_url)
     
-    # Create PDF using xhtml2pdf
-    pdf_buffer = BytesIO()
-    pisa.CreatePDF(
-        src=html_content,
-        dest=pdf_buffer
-    )
-    pdf_buffer.seek(0)
-    
-    return pdf_buffer
+    return html_content
 
 # API routes
 @app.post("/api/token", response_model=Token)
@@ -1256,19 +1279,30 @@ async def download_bill_pdf(bill_id: str):
     # Convert to BillInDB model
     bill_model = BillInDB(**serialize_mongo_doc(bill))
     
-    # Use xhtml2pdf instead of ReportLab
-    pdf_buffer = generate_bill_pdf_with_xhtml2pdf(bill_model)
+    try:
+        # Generate HTML content from template
+        html_content = render_bill_template(bill_model)
+        
+        # Generate PDF using Browserless
+        pdf_buffer = await generate_pdf_with_browserless(html_content)
+        
+        # Create a temporary file
+        temp_file = f"/tmp/{bill['bill_code']}.pdf"
+        with open(temp_file, "wb") as f:
+            f.write(pdf_buffer.read())
+        
+        return FileResponse(
+            path=temp_file,
+            filename=f"invoice_{bill['invoice_no']}.pdf",
+            media_type="application/pdf"
+        )
     
-    # Create a temporary file
-    temp_file = f"/tmp/{bill['bill_code']}.pdf"
-    with open(temp_file, "wb") as f:
-        f.write(pdf_buffer.read())
-    
-    return FileResponse(
-        path=temp_file,
-        filename=f"invoice_{bill['invoice_no']}.pdf",
-        media_type="application/pdf"
-    )
+    except Exception as e:
+        print(f"Error generating PDF: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate PDF: {str(e)}"
+        )
 
 @app.get("/api/public/bill/{bill_code}", response_model=Dict[str, Any])
 async def get_bill_by_code(bill_code: str):
