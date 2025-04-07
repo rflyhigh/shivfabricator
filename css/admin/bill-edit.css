@@ -1,15 +1,152 @@
 /* Bill Edit Specific Styles */
 
+/* Section styling */
+.bill-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.bill-section:last-child {
+    border-bottom: none;
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Admin form improvements */
+.admin-form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.admin-form-group {
+    margin-bottom: 20px;
+}
+
+.admin-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.admin-form-control {
+    width: 100%;
+    padding: 10px 12px;
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.admin-form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+    outline: none;
+}
+
+.admin-form-help {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 5px;
+}
+
+/* Admin form checkbox */
+.admin-form-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-form-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.admin-form-checkbox label {
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+/* Admin form select */
+.admin-form-select {
+    width: 100%;
+    padding: 10px 12px;
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--text-primary);
+    font-size: 14px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.admin-form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+    outline: none;
+}
+
 /* Table for bill items */
+.bill-items-table {
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+#itemsTable {
+    margin-bottom: 0;
+    border: none;
+}
+
+#itemsTable th {
+    background-color: var(--card-header-bg);
+    padding: 12px 8px;
+    font-size: 0.9rem;
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+#itemsTable td {
+    padding: 8px 5px;
+    vertical-align: middle;
+}
+
 #itemsTable input {
     width: 100%;
     padding: 8px;
     font-size: 0.9rem;
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--text-primary);
 }
 
-#itemsTable th {
-    font-size: 0.9rem;
-    text-align: center;
+#itemsTable input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+    outline: none;
 }
 
 .item-sr-no {
@@ -20,65 +157,170 @@
     text-align: right;
 }
 
-/* Bill form specific styles */
-.bill-info-box {
-    background-color: rgba(255, 255, 255, 0.03);
+/* Add item button */
+.dynamic-field-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--primary-color-light);
+    color: var(--primary-color);
+    border: none;
     border-radius: var(--border-radius);
-    padding: 20px;
-    margin-bottom: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 8px 15px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.bill-info-box h3 {
-    margin-bottom: 15px;
-    font-size: 1.1rem;
-    color: var(--text-primary);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    padding-bottom: 10px;
+.dynamic-field-add:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Remove item button */
+.dynamic-field-remove {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.dynamic-field-remove:hover {
+    background-color: rgba(244, 67, 54, 0.1);
+    color: #f44336;
+}
+
+/* Bill totals section */
+.bill-totals {
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    border: 1px solid var(--border-color);
 }
 
 .amount-input {
     text-align: right;
+    font-weight: 500;
+    font-size: 1rem;
 }
 
-/* Styles for the amount in words field */
+.grand-total {
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
 .amount-in-words {
     font-style: italic;
     color: var(--text-secondary);
 }
 
+/* GST Input Group */
+.gst-input-group {
+    position: relative;
+}
+
+.gst-amount {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: var(--text-secondary);
+    pointer-events: none;
+}
+
+/* Form buttons */
+.admin-form-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.admin-form-buttons .btn {
+    min-width: 120px;
+}
+
 /* Item rows hover effect */
 #billItems tr:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: var(--hover-bg);
 }
 
-/* Make the bill items table more compact */
-#itemsTable th, #itemsTable td {
-    padding: 8px 5px;
-}
-
-/* Make sure inputs in bill items are properly styled */
-#billItems input {
-    background-color: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
-}
-
-#billItems input:focus {
-    border-color: var(--primary-color);
-    background-color: rgba(255, 255, 255, 0.07);
+/* Dark mode specific styles */
+@media (prefers-color-scheme: dark) {
+    .admin-form-select {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23aaa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    }
 }
 
 /* Responsive adjustments */
-@media (max-width: 767.98px) {
-    #itemsTable {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
+@media (max-width: 1200px) {
+    .admin-form-row {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+}
+
+@media (max-width: 992px) {
+    .admin-form-row {
+        grid-template-columns: 1fr;
     }
     
-    .action-btn {
-        width: 30px;
-        height: 30px;
+    .bill-totals .admin-form-row {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+}
+
+@media (max-width: 767.98px) {
+    .bill-items-table {
+        overflow-x: auto;
+    }
+    
+    #itemsTable {
+        min-width: 700px;
+    }
+    
+    .bill-totals .admin-form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .admin-form-buttons {
+        flex-direction: column;
+    }
+    
+    .admin-form-buttons .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .section-title {
+        font-size: 1rem;
+    }
+    
+    .admin-form-group {
+        margin-bottom: 15px;
+    }
+    
+    .admin-form-control, 
+    .admin-form-select {
+        padding: 8px 10px;
+    }
+    
+    #itemsTable {
+        min-width: 600px;
+    }
+    
+    #itemsTable input {
+        padding: 6px;
+        font-size: 0.85rem;
     }
 }
