@@ -1896,214 +1896,135 @@ footer::before {
 
 /* Responsive Styles */
 @media (max-width: 991.98px) {
-    .project-details .container {
-        grid-template-columns: 1fr;
-    }
-    
-    .project-gallery {
-        grid-template-columns: 1fr;
-    }
-
-    .hamburger {
-        display: block;
-    }
-
-    .nav-links {
-        position: fixed;
-        top: 0;
-        right: -100%;
-        width: 300px;
-        height: 100vh;
-        background-color: var(--darker-bg);
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 100px 40px;
-        transition: var(--transition);
-        box-shadow: -5px 0 30px rgba(0, 0, 0, 0.3);
-        z-index: 1000;
-    }
-
-    .nav-links.active {
-        right: 0;
-    }
-
-    .nav-links li {
-        margin: 15px 0;
-        width: 100%;
-    }
-
-    .nav-links a {
-        display: block;
-        width: 100%;
-    }
-    
-    .mobile-nav-close {
-        display: flex;
-    }
-
-    .bill-header-content {
-        flex-direction: column;
-    }
-    
-    .bill-title {
-        text-align: left;
-        margin-top: 20px;
-    }
-    
-    .bill-info-row {
-        flex-direction: column;
-    }
-    
-    .bill-footer {
-        flex-direction: column;
-        gap: 30px;
-    }
-    
-    .bill-signature {
-        width: 100%;
-    }
-    
-    /* Theme toggle position on tablets */
+    /* Theme toggle position adjustment */
     .theme-toggle {
-        bottom: auto;
-        left: auto;
+        position: fixed;
         top: 20px;
-        right: 80px;
+        left: 20px;
         width: 40px;
         height: 40px;
         font-size: 1rem;
         z-index: 1001;
     }
+    
+    /* Mobile navigation */
+    .hamburger {
+        display: block;
+        margin-left: 15px;
+    }
+    
+    .nav-links {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 80%;
+        max-width: 320px;
+        height: 100vh;
+        background-color: var(--darker-bg);
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 100px 30px 30px;
+        transition: var(--transition);
+        box-shadow: -5px 0 30px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        overflow-y: auto;
+    }
+    
+    .nav-links.active {
+        right: 0;
+    }
+    
+    .nav-links li {
+        margin: 12px 0;
+        width: 100%;
+    }
 }
 
 @media (max-width: 767.98px) {
-    .project-meta {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .error-content {
-        padding: 40px 20px;
-    }
-    
-    .error-content h1 {
-        font-size: 80px;
-    }
-    
-    .error-content h2 {
-        font-size: 24px;
-    }
-    
-    .error-actions {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .error-actions .btn {
-        width: 100%;
-    }
-
-    .feedback-form {
-        grid-template-columns: 1fr;
-    }
-
-    .form-group.full-width {
-        grid-column: span 1;
-    }
-
-    .feedback-form-container {
-        padding: 30px 20px;
-    }
-    
-    /* Bill styles for mobile */
+    /* Bill container improvements */
     .bill-container {
-        margin: 80px 0 30px;
-        width: 100%;
-        max-width: none;
-        border-radius: 0;
+        margin: 80px 15px 30px;
+        border-radius: var(--border-radius);
     }
     
     .bill-header, .bill-details {
         padding: 20px 15px;
     }
     
+    /* Make table scrollable horizontally */
     .bill-items {
-        overflow-x: visible;
+        overflow-x: auto;
+        margin: 0 -15px;
+        padding: 0 15px;
+        width: calc(100% + 30px);
     }
     
     .bill-items table {
-        width: 100%;
-        min-width: 0;
+        min-width: 500px;
         font-size: 0.85rem;
     }
     
-    .bill-actions {
-        flex-direction: row;
-        padding: 0 20px;
+    /* Improve spacing */
+    .bill-info-row {
+        gap: 25px;
     }
     
-    .btn-download, .btn-print {
-        flex: 1;
-        padding: 12px 15px;
-        font-size: 0.9rem;
-        width: auto;
-    }
-
-    /* Adjust theme toggle position on mobile */
-    .theme-toggle {
-        bottom: 90px;
-        left: 20px;
-        top: auto;
-        right: auto;
+    .bill-meta {
+        margin-top: 10px;
     }
     
-    /* Improve form elements on mobile */
-    .form-group input,
-    .form-group textarea {
-        padding: 12px;
-        font-size: 0.95rem;
-    }
-    
-    .star-rating {
-        font-size: 1.8rem;
-        gap: 8px;
-    }
-    
-    .page-header h1 {
-        font-size: 2.2rem;
-    }
-    
-    .page-header p {
-        font-size: 1rem;
-    }
-}
-
-/* Fix for small screens */
-@media (max-width: 480px) {
-    .bill-items table {
-        font-size: 0.75rem;
-    }
-    
-    .bill-title h1 {
-        font-size: 1.8rem;
-    }
-    
-    .bill-company h2 {
-        font-size: 1.5rem;
-    }
-    
+    /* Adjust actions */
     .bill-actions {
         flex-direction: column;
+        padding: 0 15px;
         gap: 15px;
     }
     
     .btn-download, .btn-print {
         width: 100%;
+        justify-content: center;
     }
     
-    .feedback-link a {
-        display: block;
-        width: 100%;
+    /* Feedback link */
+    .feedback-link {
+        margin: 20px 15px;
+        padding: 20px 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Further adjustments for very small screens */
+    .bill-title h1 {
+        font-size: 1.6rem;
+    }
+    
+    .bill-company h2 {
+        font-size: 1.4rem;
+    }
+    
+    .bill-company p, .bill-to p, .bill-meta-item {
+        font-size: 0.9rem;
+    }
+    
+    .bill-total-label, .bill-total-value {
+        width: auto;
+        padding-right: 10px;
+    }
+    
+    .bill-total {
+        margin-right: -15px;
+    }
+    
+    /* Improve readability of totals */
+    .bill-grand-total {
+        font-size: 1.1rem;
+        color: var(--primary-color);
+    }
+    
+    /* Make notes and bank details more readable */
+    .bill-notes, .bill-bank {
+        padding: 15px;
+        font-size: 0.9rem;
     }
 }
 </style>
