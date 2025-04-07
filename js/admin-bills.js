@@ -1,8 +1,11 @@
 document.addEventListener('DOMContentLoaded', function() {
+    const { API_URL, getAuthHeaders, handleApiError, formatDate, showToast, toggleModal, debounce, escapeHtml } = window.adminUtils;
+    
     // Variables
     let currentPage = 1;
     const itemsPerPage = 10;
     let totalBills = 0;
+    let totalPages = 0;
     let bills = [];
     let currentBillId = null;
 
@@ -19,6 +22,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const copyBillLink = document.getElementById('copyBillLink');
     const previewBillBtn = document.getElementById('previewBillBtn');
     const downloadBillBtn = document.getElementById('downloadBillBtn');
+    const emailBillBtn = document.getElementById('emailBillBtn');
+    const enableFeedback = document.getElementById('enableFeedback');
     
     const deleteModal = document.getElementById('deleteModal');
     const closeDeleteModal = document.getElementById('closeDeleteModal');
@@ -31,103 +36,152 @@ document.addEventListener('DOMContentLoaded', function() {
     loadBills();
 
     // Event listeners
-    refreshBillsBtn.addEventListener('click', loadBills);
+    if (refreshBillsBtn) {
+        refreshBillsBtn.addEventListener('click', function() {
+            loadBills();
+        });
+    }
     
-    billSearch.addEventListener('input', debounce(function() {
-        currentPage = 1;
-        loadBills();
-    }, 300));
+    if (billSearch) {
+        billSearch.addEventListener('input', debounce(function() {
+            currentPage = 1;
+            loadBills();
+        }, 500));
+        
+        // Clear search with Escape key
+        billSearch.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                loadBills();
+            }
+        });
+    }
     
     // Modal event listeners
-    closeBillLinkModal.addEventListener('click', () => toggleModal(billLinkModal, false));
-    closeDeleteModal.addEventListener('click', () => toggleModal(deleteModal, false));
-    cancelDelete.addEventListener('click', () => toggleModal(deleteModal, false));
-    confirmDelete.addEventListener('click', deleteBill);
+    if (closeBillLinkModal) {
+        closeBillLinkModal.addEventListener('click', function() {
+            toggleModal(billLinkModal, false);
+        });
+    }
     
-    copyBillLink.addEventListener('click', function() {
-        billLink.select();
-        document.execCommand('copy');
-        showToast('Link copied to clipboard!', 'success');
-    });
+    if (closeDeleteModal) {
+        closeDeleteModal.addEventListener('click', function() {
+            toggleModal(deleteModal, false);
+        });
+    }
+    
+    if (cancelDelete) {
+        cancelDelete.addEventListener('click', function() {
+            toggleModal(deleteModal, false);
+        });
+    }
+    
+    if (confirmDelete) {
+        confirmDelete.addEventListener('click', deleteBill);
+    }
+    
+    if (copyBillLink) {
+        copyBillLink.addEventListener('click', function() {
+            billLink.select();
+            document.execCommand('copy');
+            showToast('Link copied to clipboard!', 'success');
+        });
+    }
+    
+    if (enableFeedback) {
+        enableFeedback.addEventListener('change', toggleFeedback);
+    }
+    
+    if (emailBillBtn) {
+        emailBillBtn.addEventListener('click', emailBill);
+    }
 
     // Functions
     async function loadBills() {
         try {
-            showLoading(billsList);
+            billsList.innerHTML = `<tr><td colspan="6" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading bills...</td></tr>`;
             
-            // Use the API_URL from adminUtils
-            const API_URL = window.adminUtils.API_URL;
-            const searchTerm = billSearch.value.trim();
-            
-            // Use fetch with auth headers from adminUtils
-            const headers = window.adminUtils.getAuthHeaders();
-            const response = await fetch(`${API_URL}/bills`, { headers });
-            
-            if (!response.ok) {
-                await window.adminUtils.handleApiError(response);
-                throw new Error('Failed to load bills');
+            if (refreshBillsBtn) {
+                refreshBillsBtn.disabled = true;
+                refreshBillsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
             }
             
-            bills = await response.json();
+            // Calculate skip for pagination
+            const skip = (currentPage - 1) * itemsPerPage;
             
-            // Filter bills if search term exists
+            // Build query parameters
+            let url = `${API_URL}/bills?skip=${skip}&limit=${itemsPerPage}`;
+            
+            const searchTerm = billSearch ? billSearch.value.trim() : '';
             if (searchTerm) {
-                bills = bills.filter(bill => 
-                    bill.invoice_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    bill.bill_to.toLowerCase().includes(searchTerm.toLowerCase())
-                );
+                url += `&search=${encodeURIComponent(searchTerm)}`;
             }
             
-            totalBills = bills.length;
+            const response = await fetch(url, {
+                headers: getAuthHeaders()
+            });
             
-            // Calculate pagination
-            const totalPages = Math.ceil(totalBills / itemsPerPage);
+            await handleApiError(response);
+            const data = await response.json();
             
-            // Adjust current page if needed
-            if (currentPage > totalPages && totalPages > 0) {
-                currentPage = totalPages;
-            }
+            // Store bills data
+            bills = data.bills || data; // Handle different API response formats
             
-            // Get bills for current page
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const currentBills = bills.slice(startIndex, endIndex);
+            // Get total count from response metadata or estimate
+            totalBills = data.total || bills.length;
+            totalPages = Math.ceil(totalBills / itemsPerPage);
             
-            renderBills(currentBills);
-            renderPagination(totalPages, currentPage);
+            // Render bills
+            renderBills(bills);
+            
+            // Update pagination
+            renderPagination();
             
         } catch (error) {
             console.error('Error loading bills:', error);
-            billsList.innerHTML = `<tr><td colspan="6" class="text-center">Error loading bills. Please try again.</td></tr>`;
+            billsList.innerHTML = `<tr><td colspan="6" class="text-center text-danger"><i class="fas fa-exclamation-circle"></i> Failed to load bills</td></tr>`;
+        } finally {
+            if (refreshBillsBtn) {
+                refreshBillsBtn.disabled = false;
+                refreshBillsBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+            }
         }
     }
 
     function renderBills(bills) {
-        if (bills.length === 0) {
-            billsList.innerHTML = `<tr><td colspan="6" class="text-center">No bills found.</td></tr>`;
+        if (!bills || bills.length === 0) {
+            billsList.innerHTML = `<tr><td colspan="6" class="text-center">No bills found</td></tr>`;
             return;
         }
         
         let html = '';
         
         bills.forEach(bill => {
+            const formattedAmount = new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                maximumFractionDigits: 0
+            }).format(bill.grand_total || 0);
+            
             html += `
                 <tr>
-                    <td>${escapeHtml(bill.invoice_no)}</td>
+                    <td><span class="bill-number">${escapeHtml(bill.invoice_no)}</span></td>
                     <td>${escapeHtml(bill.bill_to)}</td>
-                    <td>${escapeHtml(bill.date)}</td>
-                    <td>₹${bill.grand_total.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
-                    <td>${bill.enable_feedback ? '<span class="status-badge status-active">Enabled</span>' : '<span class="status-badge status-inactive">Disabled</span>'}</td>
+                    <td><span class="bill-date">${formatDate(bill.date)}</span></td>
+                    <td>${formattedAmount}</td>
+                    <td>${bill.enable_feedback ? 
+                        '<span class="status-badge status-active">Enabled</span>' : 
+                        '<span class="status-badge status-inactive">Disabled</span>'}</td>
                     <td>
                         <div class="actions">
-                            <button class="action-btn share-bill" data-id="${bill._id}" title="Share Bill">
+                            <button class="action-btn share-bill" title="Share Bill" onclick="shareBill('${bill._id}')">
                                 <i class="fas fa-share-alt"></i>
                             </button>
                             <a href="bill-edit.html?id=${bill._id}" class="action-btn" title="Edit Bill">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <button class="action-btn delete delete-bill" data-id="${bill._id}" data-invoice="${bill.invoice_no}" data-client="${bill.bill_to}" title="Delete Bill">
-                                <i class="fas fa-trash"></i>
+                            <button class="action-btn delete" title="Delete Bill" onclick="confirmDeleteBill('${bill._id}')">
+                                <i class="fas fa-trash-alt"></i>
                             </button>
                         </div>
                     </td>
@@ -136,26 +190,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         billsList.innerHTML = html;
-        
-        // Add event listeners to buttons
-        document.querySelectorAll('.share-bill').forEach(button => {
-            button.addEventListener('click', function() {
-                const billId = this.getAttribute('data-id');
-                openShareModal(billId);
-            });
-        });
-        
-        document.querySelectorAll('.delete-bill').forEach(button => {
-            button.addEventListener('click', function() {
-                const billId = this.getAttribute('data-id');
-                const invoice = this.getAttribute('data-invoice');
-                const client = this.getAttribute('data-client');
-                openDeleteModal(billId, invoice, client);
-            });
-        });
     }
 
-    function renderPagination(totalPages, currentPage) {
+    function renderPagination() {
         if (totalPages <= 1) {
             billsPagination.innerHTML = '';
             return;
@@ -166,19 +203,53 @@ document.addEventListener('DOMContentLoaded', function() {
         // Previous button
         html += `
             <button class="pagination-item ${currentPage === 1 ? 'disabled' : ''}" 
-                ${currentPage === 1 ? 'disabled' : 'data-page="' + (currentPage - 1) + '"'}>
+                ${currentPage === 1 ? 'disabled' : `onclick="changePage(${currentPage - 1})"`}>
                 <i class="fas fa-chevron-left"></i>
             </button>
         `;
         
         // Page numbers
-        const startPage = Math.max(1, currentPage - 2);
-        const endPage = Math.min(totalPages, startPage + 4);
+        const maxPagesToShow = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
         
+        // Adjust start page if end page is maxed out
+        if (endPage === totalPages) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+        }
+        
+        // First page button if not starting from page 1
+        if (startPage > 1) {
+            html += `
+                <button class="pagination-item" onclick="changePage(1)">1</button>
+            `;
+            
+            // Add ellipsis if there's a gap
+            if (startPage > 2) {
+                html += `<span class="pagination-item disabled">...</span>`;
+            }
+        }
+        
+        // Page numbers
         for (let i = startPage; i <= endPage; i++) {
             html += `
-                <button class="pagination-item ${i === currentPage ? 'active' : ''}" data-page="${i}">
+                <button class="pagination-item ${i === currentPage ? 'active' : ''}" 
+                    onclick="changePage(${i})">
                     ${i}
+                </button>
+            `;
+        }
+        
+        // Last page button if not ending at last page
+        if (endPage < totalPages) {
+            // Add ellipsis if there's a gap
+            if (endPage < totalPages - 1) {
+                html += `<span class="pagination-item disabled">...</span>`;
+            }
+            
+            html += `
+                <button class="pagination-item" onclick="changePage(${totalPages})">
+                    ${totalPages}
                 </button>
             `;
         }
@@ -186,71 +257,174 @@ document.addEventListener('DOMContentLoaded', function() {
         // Next button
         html += `
             <button class="pagination-item ${currentPage === totalPages ? 'disabled' : ''}" 
-                ${currentPage === totalPages ? 'disabled' : 'data-page="' + (currentPage + 1) + '"'}>
+                ${currentPage === totalPages ? 'disabled' : `onclick="changePage(${currentPage + 1})"`}>
                 <i class="fas fa-chevron-right"></i>
             </button>
         `;
         
         billsPagination.innerHTML = html;
-        
-        // Add event listeners to pagination items
-        document.querySelectorAll('.pagination-item:not(.disabled):not(.active)').forEach(item => {
-            item.addEventListener('click', function() {
-                currentPage = parseInt(this.getAttribute('data-page'));
-                loadBills();
-            });
-        });
     }
+    
+    // Change page
+    window.changePage = function(page) {
+        if (page < 1 || page > totalPages || page === currentPage) return;
+        currentPage = page;
+        loadBills();
+        // Scroll to top of table
+        document.querySelector('.admin-table-responsive').scrollIntoView({ behavior: 'smooth' });
+    };
 
-    function openShareModal(billId) {
+    // Share bill
+    window.shareBill = function(billId) {
         const bill = bills.find(b => b._id === billId);
         if (!bill) return;
+        
+        currentBillId = billId;
         
         // Use the BASE_URL from the window or a default
         const BASE_URL = window.location.origin;
         
-        billLink.value = `${BASE_URL}/bill?code=${bill.bill_code}`;
-        previewBillBtn.href = `${BASE_URL}/bill?code=${bill.bill_code}`;
-        downloadBillBtn.href = `${window.adminUtils.API_URL}/bills/${billId}/download`;
+        // Set link and buttons
+        billLink.value = `${BASE_URL}/bill?code=${bill.bill_code || billId}`;
+        previewBillBtn.href = `${BASE_URL}/bill?code=${bill.bill_code || billId}`;
+        downloadBillBtn.href = `${API_URL}/bills/${billId}/download`;
+        
+        // Set feedback toggle
+        if (enableFeedback) {
+            enableFeedback.checked = bill.enable_feedback || false;
+        }
         
         toggleModal(billLinkModal, true);
+    };
+    
+    // Toggle feedback
+    async function toggleFeedback() {
+        if (!currentBillId) return;
+        
+        try {
+            const enabled = enableFeedback.checked;
+            
+            const response = await fetch(`${API_URL}/bills/${currentBillId}/feedback`, {
+                method: 'PUT',
+                headers: {
+                    ...getAuthHeaders(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ enable_feedback: enabled })
+            });
+            
+            await handleApiError(response);
+            
+            // Update local data
+            const index = bills.findIndex(b => b._id === currentBillId);
+            if (index !== -1) {
+                bills[index].enable_feedback = enabled;
+            }
+            
+            showToast(`Feedback ${enabled ? 'enabled' : 'disabled'} for this bill`, 'success');
+            
+        } catch (error) {
+            console.error('Error toggling feedback:', error);
+            showToast('Failed to update feedback setting', 'error');
+            
+            // Revert toggle
+            enableFeedback.checked = !enableFeedback.checked;
+        }
+    }
+    
+    // Email bill to client
+    async function emailBill(e) {
+        e.preventDefault();
+        
+        if (!currentBillId) return;
+        
+        try {
+            emailBillBtn.disabled = true;
+            emailBillBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            
+            const response = await fetch(`${API_URL}/bills/${currentBillId}/email`, {
+                method: 'POST',
+                headers: getAuthHeaders()
+            });
+            
+            await handleApiError(response);
+            
+            showToast('Bill sent to client via email', 'success');
+            
+        } catch (error) {
+            console.error('Error emailing bill:', error);
+            showToast('Failed to send email: ' + (error.message || 'Unknown error'), 'error');
+        } finally {
+            emailBillBtn.disabled = false;
+            emailBillBtn.innerHTML = '<i class="fas fa-envelope"></i> Email to Client';
+        }
     }
 
-    function openDeleteModal(billId, invoice, client) {
+    // Confirm delete bill
+    window.confirmDeleteBill = function(billId) {
+        const bill = bills.find(b => b._id === billId);
+        if (!bill) return;
+        
         currentBillId = billId;
-        deleteBillInvoice.textContent = invoice;
-        deleteBillClient.textContent = client;
+        
+        deleteBillInvoice.textContent = bill.invoice_no;
+        deleteBillClient.textContent = bill.bill_to;
+        
         toggleModal(deleteModal, true);
-    }
+    };
 
     async function deleteBill() {
         if (!currentBillId) return;
         
         try {
-            const API_URL = window.adminUtils.API_URL;
-            const headers = window.adminUtils.getAuthHeaders();
+            confirmDelete.disabled = true;
+            confirmDelete.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
             
             const response = await fetch(`${API_URL}/bills/${currentBillId}`, {
                 method: 'DELETE',
-                headers
+                headers: getAuthHeaders()
             });
             
-            if (!response.ok) {
-                await window.adminUtils.handleApiError(response);
-                throw new Error('Failed to delete bill');
-            }
+            await handleApiError(response);
             
+            // Close modal and reload bills
             toggleModal(deleteModal, false);
             showToast('Bill deleted successfully', 'success');
-            loadBills();
+            
+            // Remove from local data
+            bills = bills.filter(b => b._id !== currentBillId);
+            
+            // Reset current page if it would be empty after deletion
+            if ((currentPage - 1) * itemsPerPage >= bills.length && currentPage > 1) {
+                currentPage--;
+            }
+            
+            // Reload bills or render existing data
+            if (bills.length === 0) {
+                loadBills();
+            } else {
+                renderBills(bills);
+                renderPagination();
+            }
             
         } catch (error) {
             console.error('Error deleting bill:', error);
-            showToast('Error deleting bill. Please try again.', 'error');
+            showToast('Failed to delete bill: ' + (error.message || 'Unknown error'), 'error');
+        } finally {
+            confirmDelete.disabled = false;
+            confirmDelete.innerHTML = 'Delete';
         }
     }
-
-    function showLoading(element) {
-        element.innerHTML = `<tr><td colspan="6" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>`;
-    }
+    
+    // Handle keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Escape key to close modals
+        if (e.key === 'Escape') {
+            if (billLinkModal.classList.contains('active')) {
+                toggleModal(billLinkModal, false);
+            } else if (deleteModal.classList.contains('active')) {
+                toggleModal(deleteModal, false);
+            }
+        }
+    });
 });
