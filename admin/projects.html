@@ -84,7 +84,7 @@
                 <h1 class="page-title">Projects</h1>
             </div>
             <div class="header-right">
-                <a href="project-edit.html" class="btn btn-primary btn-sm">
+                <a href="project-edit.html" class="btn btn-primary">
                     <i class="fas fa-plus"></i> New Project
                 </a>
             </div>
@@ -97,6 +97,7 @@
                     <h2 class="admin-card-title">All Projects</h2>
                     <div class="admin-card-actions">
                         <div class="admin-search">
+                            <i class="fas fa-search search-icon"></i>
                             <input type="text" id="projectSearch" placeholder="Search projects..." class="admin-form-control">
                         </div>
                         <select id="categoryFilter" class="admin-form-select">
@@ -164,9 +165,13 @@
                 <p>Share this link with your client to collect feedback:</p>
                 <div class="feedback-link-container">
                     <input type="text" id="feedbackLink" class="admin-form-control" readonly>
-                    <button class="btn btn-primary btn-sm" id="copyFeedbackLink">
+                    <button class="btn btn-primary" id="copyFeedbackLink">
                         <i class="fas fa-copy"></i> Copy
                     </button>
+                </div>
+                <div id="feedbackNotAvailable" class="feedback-not-available" style="display: none;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <p>Feedback link is not available for this project.</p>
                 </div>
             </div>
             <div class="modal-footer">
