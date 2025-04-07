@@ -1,10 +1,12 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const { API_URL, getAuthHeaders, handleApiError, formatDate, showToast } = window.adminUtils;
+    const { API_URL, getAuthHeaders, handleApiError, formatDate, showToast, toggleModal, debounce, escapeHtml } = window.adminUtils;
     const feedbackList = document.getElementById('feedbackList');
     const projectFilter = document.getElementById('projectFilter');
     const statusFilter = document.getElementById('statusFilter');
+    const feedbackSearch = document.getElementById('feedbackSearch');
     const refreshFeedback = document.getElementById('refreshFeedback');
     const feedbackPagination = document.getElementById('feedbackPagination');
+    const feedbackCount = document.getElementById('feedbackCount');
     
     // View feedback modal elements
     const viewFeedbackModal = document.getElementById('viewFeedbackModal');
@@ -14,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const feedbackCompany = document.getElementById('feedbackCompany');
     const feedbackFrom = document.getElementById('feedbackFrom');
     const feedbackRating = document.getElementById('feedbackRating');
+    const ratingValue = document.getElementById('ratingValue');
     const feedbackDate = document.getElementById('feedbackDate');
     const feedbackContent = document.getElementById('feedbackContent');
     const feedbackStatus = document.getElementById('feedbackStatus');
@@ -24,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Delete modal elements
     const deleteModal = document.getElementById('deleteModal');
     const deleteFeedbackFrom = document.getElementById('deleteFeedbackFrom');
+    const deleteFeedbackProject = document.getElementById('deleteFeedbackProject');
     const closeDeleteModal = document.getElementById('closeDeleteModal');
     const cancelDelete = document.getElementById('cancelDelete');
     const confirmDelete = document.getElementById('confirmDelete');
@@ -37,6 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Filter variables
     let currentProjectId = '';
     let currentStatus = '';
+    let searchTerm = '';
     
     // Current feedback data
     let feedback = [];
@@ -61,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             // Store projects data
-            projects = data;
+            projects = data.projects || data; // Handle different API response formats
             
             // Populate project filter
             if (projectFilter) {
@@ -77,13 +82,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (error) {
             console.error('Error loading projects:', error);
+            showToast('Failed to load projects', 'error');
         }
     }
     
     // Load feedback
     async function loadFeedback() {
         try {
-            feedbackList.innerHTML = '<tr><td colspan="6" class="text-center">Loading feedback...</td></tr>';
+            feedbackList.innerHTML = '<tr><td colspan="6" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading feedback...</td></tr>';
+            
+            if (refreshFeedback) {
+                refreshFeedback.disabled = true;
+                refreshFeedback.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+            }
             
             // Calculate skip for pagination
             const skip = (currentPage - 1) * itemsPerPage;
@@ -92,6 +103,9 @@ document.addEventListener('DOMContentLoaded', function() {
             let url = `${API_URL}/feedback?skip=${skip}&limit=${itemsPerPage}`;
             if (currentProjectId) {
                 url += `&project_id=${currentProjectId}`;
+            }
+            if (searchTerm) {
+                url += `&search=${encodeURIComponent(searchTerm)}`;
             }
             
             const response = await fetch(url, {
@@ -102,42 +116,51 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             // Store feedback data
-            feedback = data;
+            feedback = data.feedback || data; // Handle different API response formats
             
-            // For demo purposes, set total to number of feedback items returned
-            // In a real API, you would get total from response metadata
-            totalFeedback = data.length > itemsPerPage ? data.length : itemsPerPage * 2;
+            // Get total count from response metadata or estimate
+            totalFeedback = data.total || feedback.length;
             totalPages = Math.ceil(totalFeedback / itemsPerPage);
             
+            // Update feedback count
+            if (feedbackCount) {
+                feedbackCount.textContent = totalFeedback;
+            }
+            
+            // Filter by status if needed (in case API doesn't support status filtering)
+            if (currentStatus) {
+                feedback = feedback.filter(item => {
+                    const isApproved = item.approved ? 'approved' : 'pending';
+                    return currentStatus === isApproved;
+                });
+            }
+            
             // Render feedback
-            renderFeedback(data);
+            renderFeedback(feedback);
             
             // Update pagination
             renderPagination();
             
         } catch (error) {
             console.error('Error loading feedback:', error);
-            feedbackList.innerHTML = '<tr><td colspan="6" class="text-center">Failed to load feedback</td></tr>';
+            feedbackList.innerHTML = '<tr><td colspan="6" class="text-center text-danger"><i class="fas fa-exclamation-circle"></i> Failed to load feedback</td></tr>';
+        } finally {
+            if (refreshFeedback) {
+                refreshFeedback.disabled = false;
+                refreshFeedback.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+            }
         }
     }
     
     // Render feedback in table
     function renderFeedback(feedbackItems) {
-        if (feedbackItems.length === 0) {
+        if (!feedbackItems || feedbackItems.length === 0) {
             feedbackList.innerHTML = '<tr><td colspan="6" class="text-center">No feedback found</td></tr>';
             return;
         }
         
         let html = '';
         feedbackItems.forEach(item => {
-            // Filter by status if selected
-            if (currentStatus) {
-                const isApproved = item.approved ? 'approved' : 'pending';
-                if (currentStatus !== isApproved) {
-                    return;
-                }
-            }
-            
             // Find project name
             const project = projects.find(p => p._id === item.project_id) || { title: 'Unknown Project' };
             
@@ -146,8 +169,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             html += `
                 <tr>
-                    <td>${project.title}</td>
-                    <td>${item.company_name}</td>
+                    <td>${escapeHtml(project.title)}</td>
+                    <td>${escapeHtml(item.company_name || 'N/A')}</td>
                     <td>
                         <div class="rating-display">
                             ${generateStars(item.rating)}
@@ -165,7 +188,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <i class="fas fa-check"></i>
                                 </button>
                             ` : ''}
-                            <button class="action-btn delete" title="Delete" onclick="confirmDeleteFeedback('${item._id}', '${item.author_name}')">
+                            <button class="action-btn delete" title="Delete" onclick="confirmDeleteFeedback('${item._id}')">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </div>
@@ -174,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         });
         
-        feedbackList.innerHTML = html || '<tr><td colspan="6" class="text-center">No matching feedback found</td></tr>';
+        feedbackList.innerHTML = html;
     }
     
     // Generate star rating HTML
@@ -202,15 +225,34 @@ document.addEventListener('DOMContentLoaded', function() {
         // Previous button
         html += `
             <button class="pagination-item ${currentPage === 1 ? 'disabled' : ''}" 
-                ${currentPage === 1 ? 'disabled' : 'onclick="changePage(' + (currentPage - 1) + ')"'}>
+                ${currentPage === 1 ? 'disabled' : `onclick="changePage(${currentPage - 1})"`}>
                 <i class="fas fa-chevron-left"></i>
             </button>
         `;
         
         // Page numbers
-        const startPage = Math.max(1, currentPage - 2);
-        const endPage = Math.min(totalPages, startPage + 4);
+        const maxPagesToShow = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
         
+        // Adjust start page if end page is maxed out
+        if (endPage === totalPages) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+        }
+        
+        // First page button if not starting from page 1
+        if (startPage > 1) {
+            html += `
+                <button class="pagination-item" onclick="changePage(1)">1</button>
+            `;
+            
+            // Add ellipsis if there's a gap
+            if (startPage > 2) {
+                html += `<span class="pagination-item disabled">...</span>`;
+            }
+        }
+        
+        // Page numbers
         for (let i = startPage; i <= endPage; i++) {
             html += `
                 <button class="pagination-item ${i === currentPage ? 'active' : ''}" 
@@ -220,10 +262,24 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         }
         
+        // Last page button if not ending at last page
+        if (endPage < totalPages) {
+            // Add ellipsis if there's a gap
+            if (endPage < totalPages - 1) {
+                html += `<span class="pagination-item disabled">...</span>`;
+            }
+            
+            html += `
+                <button class="pagination-item" onclick="changePage(${totalPages})">
+                    ${totalPages}
+                </button>
+            `;
+        }
+        
         // Next button
         html += `
             <button class="pagination-item ${currentPage === totalPages ? 'disabled' : ''}" 
-                ${currentPage === totalPages ? 'disabled' : 'onclick="changePage(' + (currentPage + 1) + ')"'}>
+                ${currentPage === totalPages ? 'disabled' : `onclick="changePage(${currentPage + 1})"`}>
                 <i class="fas fa-chevron-right"></i>
             </button>
         `;
@@ -233,8 +289,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Change page
     window.changePage = function(page) {
+        if (page < 1 || page > totalPages || page === currentPage) return;
         currentPage = page;
         loadFeedback();
+        // Scroll to top of table
+        document.querySelector('.admin-table-responsive').scrollIntoView({ behavior: 'smooth' });
     };
     
     // View feedback details
@@ -250,11 +309,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Fill modal with feedback details
         feedbackProject.textContent = project.title;
-        feedbackCompany.textContent = item.company_name;
-        feedbackFrom.textContent = item.author_name;
+        feedbackCompany.textContent = item.company_name || 'N/A';
+        feedbackFrom.textContent = item.author_name || 'Anonymous';
         feedbackRating.innerHTML = generateStars(item.rating);
+        ratingValue.textContent = item.rating;
         feedbackDate.textContent = formatDate(item.created_at);
-        feedbackContent.textContent = item.text;
+        feedbackContent.textContent = item.text || 'No feedback text provided';
         
         // Set status
         const statusClass = item.approved ? 'status-approved' : 'status-pending';
@@ -270,26 +330,38 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Show modal
-        viewFeedbackModal.classList.add('active');
+        toggleModal(viewFeedbackModal, true);
     };
     
     // Close view modal
     if (closeViewModal) {
         closeViewModal.addEventListener('click', function() {
-            viewFeedbackModal.classList.remove('active');
+            toggleModal(viewFeedbackModal, false);
         });
     }
     
     if (closeFeedbackBtn) {
         closeFeedbackBtn.addEventListener('click', function() {
-            viewFeedbackModal.classList.remove('active');
+            toggleModal(viewFeedbackModal, false);
         });
     }
     
     // Approve feedback
     window.approveFeedback = async function(id) {
         try {
-            const response = await fetch(`${API_URL}/feedback/${id}/approve`, {
+            const feedbackId = id || (currentFeedback ? currentFeedback._id : null);
+            if (!feedbackId) {
+                showToast('No feedback selected', 'error');
+                return;
+            }
+            
+            // Disable approve button if in modal
+            if (id === undefined && approveFeedbackBtn) {
+                approveFeedbackBtn.disabled = true;
+                approveFeedbackBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Approving...';
+            }
+            
+            const response = await fetch(`${API_URL}/feedback/${feedbackId}/approve`, {
                 method: 'PUT',
                 headers: getAuthHeaders()
             });
@@ -298,11 +370,15 @@ document.addEventListener('DOMContentLoaded', function() {
             
             showToast('Feedback approved successfully', 'success');
             
-            // Reload feedback
-            loadFeedback();
+            // Update in local data
+            const feedbackIndex = feedback.findIndex(f => f._id === feedbackId);
+            if (feedbackIndex !== -1) {
+                feedback[feedbackIndex].approved = true;
+                renderFeedback(feedback);
+            }
             
             // If modal is open, update the status
-            if (viewFeedbackModal.classList.contains('active') && currentFeedback && currentFeedback._id === id) {
+            if (viewFeedbackModal.classList.contains('active') && currentFeedback && currentFeedback._id === feedbackId) {
                 feedbackStatus.className = 'status-badge status-approved';
                 feedbackStatus.textContent = 'Approved';
                 approveFeedbackBtn.style.display = 'none';
@@ -313,16 +389,20 @@ document.addEventListener('DOMContentLoaded', function() {
             
         } catch (error) {
             console.error('Error approving feedback:', error);
-            showToast('Failed to approve feedback', 'error');
+            showToast('Failed to approve feedback: ' + (error.message || 'Unknown error'), 'error');
+        } finally {
+            // Re-enable approve button if in modal
+            if (id === undefined && approveFeedbackBtn) {
+                approveFeedbackBtn.disabled = false;
+                approveFeedbackBtn.innerHTML = '<i class="fas fa-check"></i> Approve Feedback';
+            }
         }
     };
     
     // Approve from modal
     if (approveFeedbackBtn) {
         approveFeedbackBtn.addEventListener('click', function() {
-            if (currentFeedback) {
-                approveFeedback(currentFeedback._id);
-            }
+            approveFeedback();
         });
     }
     
@@ -330,29 +410,38 @@ document.addEventListener('DOMContentLoaded', function() {
     if (deleteFeedbackBtn) {
         deleteFeedbackBtn.addEventListener('click', function() {
             if (currentFeedback) {
-                confirmDeleteFeedback(currentFeedback._id, currentFeedback.author_name);
-                viewFeedbackModal.classList.remove('active');
+                confirmDeleteFeedback(currentFeedback._id);
+                toggleModal(viewFeedbackModal, false);
             }
         });
     }
     
     // Confirm delete feedback
-    window.confirmDeleteFeedback = function(id, name) {
+    window.confirmDeleteFeedback = function(id) {
+        const item = feedback.find(f => f._id === id);
+        if (!item) return;
+        
         feedbackToDelete = id;
-        deleteFeedbackFrom.textContent = name;
-        deleteModal.classList.add('active');
+        
+        // Find project name
+        const project = projects.find(p => p._id === item.project_id) || { title: 'Unknown Project' };
+        
+        deleteFeedbackFrom.textContent = item.author_name || 'Anonymous';
+        deleteFeedbackProject.textContent = project.title;
+        
+        toggleModal(deleteModal, true);
     };
     
     // Close delete modal
     if (closeDeleteModal) {
         closeDeleteModal.addEventListener('click', function() {
-            deleteModal.classList.remove('active');
+            toggleModal(deleteModal, false);
         });
     }
     
     if (cancelDelete) {
         cancelDelete.addEventListener('click', function() {
-            deleteModal.classList.remove('active');
+            toggleModal(deleteModal, false);
         });
     }
     
@@ -362,6 +451,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!feedbackToDelete) return;
             
             try {
+                confirmDelete.disabled = true;
+                confirmDelete.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+                
                 const response = await fetch(`${API_URL}/feedback/${feedbackToDelete}`, {
                     method: 'DELETE',
                     headers: getAuthHeaders()
@@ -370,23 +462,68 @@ document.addEventListener('DOMContentLoaded', function() {
                 await handleApiError(response);
                 
                 // Close modal and reload feedback
-                deleteModal.classList.remove('active');
+                toggleModal(deleteModal, false);
                 showToast('Feedback deleted successfully', 'success');
-                loadFeedback();
+                
+                // Remove from local data
+                feedback = feedback.filter(f => f._id !== feedbackToDelete);
+                
+                // Reset current page if it would be empty after deletion
+                if (feedback.length === 0 && currentPage > 1) {
+                    currentPage--;
+                }
+                
+                // Render with updated data or reload
+                if (feedback.length === 0) {
+                    loadFeedback();
+                } else {
+                    renderFeedback(feedback);
+                    
+                    // Update total count
+                    totalFeedback--;
+                    totalPages = Math.ceil(totalFeedback / itemsPerPage);
+                    renderPagination();
+                    
+                    if (feedbackCount) {
+                        feedbackCount.textContent = totalFeedback;
+                    }
+                }
                 
             } catch (error) {
                 console.error('Error deleting feedback:', error);
-                showToast('Failed to delete feedback', 'error');
-                deleteModal.classList.remove('active');
+                showToast('Failed to delete feedback: ' + (error.message || 'Unknown error'), 'error');
+            } finally {
+                confirmDelete.disabled = false;
+                confirmDelete.innerHTML = 'Delete';
+                toggleModal(deleteModal, false);
             }
         });
     }
     
+    // Debounced search input
+    const debouncedSearch = debounce(function() {
+        searchTerm = feedbackSearch.value.trim();
+        currentPage = 1; // Reset to first page on search
+        loadFeedback();
+    }, 500);
+    
     // Event listeners
+    if (feedbackSearch) {
+        feedbackSearch.addEventListener('input', debouncedSearch);
+        
+        // Clear search with Escape key
+        feedbackSearch.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                debouncedSearch();
+            }
+        });
+    }
+    
     if (projectFilter) {
         projectFilter.addEventListener('change', function() {
             currentProjectId = this.value;
-            currentPage = 1;
+            currentPage = 1; // Reset to first page on filter change
             loadFeedback();
         });
     }
@@ -394,7 +531,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (statusFilter) {
         statusFilter.addEventListener('change', function() {
             currentStatus = this.value;
-            renderFeedback(feedback);
+            currentPage = 1; // Reset to first page on filter change
+            loadFeedback();
         });
     }
     
@@ -404,78 +542,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Add CSS for rating and status
-    const feedbackStyle = document.createElement('style');
-    feedbackStyle.textContent = `
-        .rating-display {
-            color: #ffc107;
-            font-size: 14px;
+    // Handle keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Escape key to close modals
+        if (e.key === 'Escape') {
+            if (viewFeedbackModal.classList.contains('active')) {
+                toggleModal(viewFeedbackModal, false);
+            } else if (deleteModal.classList.contains('active')) {
+                toggleModal(deleteModal, false);
+            }
         }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        
-        .status-approved {
-            background-color: rgba(76, 175, 80, 0.1);
-            color: #4caf50;
-        }
-        
-        .status-pending {
-            background-color: rgba(255, 152, 0, 0.1);
-            color: #ff9800;
-        }
-        
-        .action-btn.approve {
-            background-color: rgba(76, 175, 80, 0.1);
-            color: #4caf50;
-        }
-        
-        .action-btn.approve:hover {
-            background-color: #4caf50;
-            color: white;
-        }
-        
-        .feedback-status-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        .feedback-status {
-            display: flex;
-            align-items: center;
-        }
-        
-        .feedback-status strong {
-            margin-right: 10px;
-        }
-        
-        .rating-value {
-            font-size: 36px;
-            font-weight: 700;
-            color: var(--primary-color);
-            margin-top: 20px;
-        }
-        
-        .rating-label {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-        
-        .admin-filter-group {
-            display: flex;
-            gap: 15px;
-        }
-    `;
-    document.head.appendChild(feedbackStyle);
+    });
     
     // Initialize page
     function init() {
