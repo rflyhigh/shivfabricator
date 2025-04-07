@@ -880,6 +880,25 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 async def health_check():
     return HealthCheck()
 
+
+@app.get("/api/feedback/code-info/{code}", response_model=Dict[str, Any])
+async def get_feedback_code_info(code: str):
+    """Verify if a feedback code exists and return project information"""
+    code_doc = await db.feedback_codes.find_one({"code": code})
+    if not code_doc:
+        raise HTTPException(status_code=404, detail="Invalid feedback code")
+    
+    # Get project information
+    project = None
+    if code_doc.get("project_id"):
+        project = await db.projects.find_one({"_id": ObjectId(code_doc["project_id"])})
+    
+    return {
+        "valid": True,
+        "project_name": project["title"] if project else None,
+        "service_type": project["category"] if project else None
+    }
+
 @app.post("/api/projects", response_model=Project)
 async def create_project(project: ProjectCreate, current_user: User = Depends(get_current_active_user)):
     # Check if slug already exists
