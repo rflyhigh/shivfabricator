@@ -1894,230 +1894,38 @@ footer::before {
     to { transform: scale(1); }
 }
 
-/* Responsive Styles */
-@media (max-width: 991.98px) {
-    .project-details .container {
-        grid-template-columns: 1fr;
-    }
-    
-    .project-gallery {
-        grid-template-columns: 1fr;
-    }
-
-    .hamburger {
-        display: block;
-    }
-
-    .nav-links {
-        position: fixed;
-        top: 0;
-        right: -100%;
-        width: 300px;
-        height: 100vh;
-        background-color: var(--darker-bg);
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 100px 40px;
-        transition: var(--transition);
-        box-shadow: -5px 0 30px rgba(0, 0, 0, 0.3);
-        z-index: 1000;
-    }
-
-    .nav-links.active {
-        right: 0;
-    }
-
-    .nav-links li {
-        margin: 15px 0;
-        width: 100%;
-    }
-
-    .nav-links a {
-        display: block;
-        width: 100%;
-    }
-    
-    .mobile-nav-close {
-        display: flex;
-    }
-
-    .bill-header-content {
-        flex-direction: column;
-    }
-    
-    .bill-title {
-        text-align: left;
-        margin-top: 20px;
-    }
-    
-    .bill-info-row {
-        flex-direction: column;
-    }
-    
-    .bill-footer {
-        flex-direction: column;
-        gap: 30px;
-    }
-    
-    .bill-signature {
-        width: 100%;
-    }
-    
-    /* Theme toggle position on tablets */
-    .theme-toggle {
-        bottom: auto;
-        left: auto;
-        top: 20px;
-        right: 80px;
-        width: 40px;
-        height: 40px;
-        font-size: 1rem;
-        z-index: 1001;
-    }
-}
-
-@media (max-width: 767.98px) {
-    .project-meta {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .error-content {
-        padding: 40px 20px;
-    }
-    
-    .error-content h1 {
-        font-size: 80px;
-    }
-    
-    .error-content h2 {
-        font-size: 24px;
-    }
-    
-    .error-actions {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .error-actions .btn {
-        width: 100%;
-    }
-
-    .feedback-form {
-        grid-template-columns: 1fr;
-    }
-
-    .form-group.full-width {
-        grid-column: span 1;
-    }
-
-    .feedback-form-container {
-        padding: 30px 20px;
-    }
-    
-    .btn-download, .btn-print {
-        flex: 1;
-        padding: 12px 15px;
-        font-size: 0.9rem;
-        width: auto;
-    }
-
-    /* Adjust theme toggle position on mobile */
-    .theme-toggle {
-        bottom: 90px;
-        left: 20px;
-        top: auto;
-        right: auto;
-    }
-    
-    /* Improve form elements on mobile */
-    .form-group input,
-    .form-group textarea {
-        padding: 12px;
-        font-size: 0.95rem;
-    }
-    
-    .star-rating {
-        font-size: 1.8rem;
-        gap: 8px;
-    }
-    
-    .page-header h1 {
-        font-size: 2.2rem;
-    }
-    
-    .page-header p {
-        font-size: 1rem;
-    }
-}
-
-/* Fix for small screens */
-@media (max-width: 480px) {
-    .bill-items table {
-        font-size: 0.75rem;
-    }
-    
-    .bill-title h1 {
-        font-size: 1.8rem;
-    }
-    
-    .bill-company h2 {
-        font-size: 1.5rem;
-    }
-    
-    .bill-actions {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .btn-download, .btn-print {
-        width: 100%;
-    }
-    
-    .feedback-link a {
-        display: block;
-        width: 100%;
-    }
-}
-
-/* Bill Styles for Mobile - Fixed scaling and scrolling */
+/* Bill Styles for Mobile - Properly scaled down to fit on screen */
 @media (max-width: 767.98px) {
     .bill-container {
         margin: 80px auto 30px;
         width: 100%;
         max-width: 100%;
-        transform: none;
-        overflow-x: auto;
-    }
-    
-    .bill-header, .bill-details {
-        padding: 15px;
-        min-width: 700px; /* Ensures full content is visible with scrolling */
+        transform: scale(0.5);
+        transform-origin: top center;
+        height: auto;
     }
     
     .bill-header-content {
-        flex-direction: row;
-        justify-content: space-between;
+        flex-direction: row; /* Keep the same as desktop */
     }
     
     .bill-title {
-        text-align: right;
-        margin-top: 0;
+        text-align: right; /* Keep the same as desktop */
     }
     
     .bill-info-row {
-        flex-direction: row;
+        flex-direction: row; /* Keep the same as desktop */
     }
     
     .bill-footer {
-        flex-direction: row;
+        flex-direction: row; /* Keep the same as desktop */
     }
     
     .bill-signature {
-        width: 40%;
+        width: 40%; /* Keep the same as desktop */
     }
     
-    /* Ensure table is properly visible */
+    /* No scrolling needed */
     .bill-items {
         overflow-x: visible;
     }
@@ -2127,43 +1935,27 @@ footer::before {
         width: 100%;
     }
     
-    /* Ensure action buttons are visible and outside the scrollable area */
+    /* Ensure action buttons are visible and positioned correctly */
     .bill-actions {
+        transform: scale(1);
+        margin-top: 0;
         position: relative;
-        z-index: 2;
-        padding: 0 15px;
-        margin-top: 20px;
+        z-index: 10;
     }
 }
 
 @media (max-width: 480px) {
-    /* Further adjustments for very small screens */
     .bill-container {
+        transform: scale(0.4);
         margin: 60px auto 0;
     }
     
+    /* Keep the action buttons visible and usable */
     .bill-actions {
-        margin-top: 15px;
-    }
-    
-    /* Make horizontal scrolling more obvious */
-    .bill-container:after {
-        content: '';
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        width: 20px;
-        height: 20px;
-        background-color: rgba(0, 198, 255, 0.2);
-        border-radius: 50%;
-        animation: pulse 2s infinite;
-        pointer-events: none;
-    }
-    
-    @keyframes pulse {
-        0% { opacity: 0.6; transform: scale(1); }
-        50% { opacity: 1; transform: scale(1.2); }
-        100% { opacity: 0.6; transform: scale(1); }
+        transform: scale(1);
+        margin-top: -50px;
+        position: relative;
+        z-index: 10;
     }
 }
 </style>
