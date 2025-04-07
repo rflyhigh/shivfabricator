@@ -84,7 +84,7 @@
                 <h1 class="page-title" id="billTitle">New Bill</h1>
             </div>
             <div class="header-right">
-                <a href="bills.html" class="btn btn-secondary btn-sm">
+                <a href="bills.html" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back to Bills
                 </a>
             </div>
@@ -100,51 +100,64 @@
                     <form id="billForm" class="admin-form">
                         <input type="hidden" id="billId">
                         
-                        <div class="admin-form-row">
-                            <div class="admin-form-group">
-                                <label for="invoice_no">Invoice No*</label>
-                                <input type="text" id="invoice_no" name="invoice_no" class="admin-form-control" required>
-                            </div>
-                            <div class="admin-form-group">
-                                <label for="date">Date*</label>
-                                <input type="text" id="date" name="date" class="admin-form-control" required placeholder="e.g. 20 March, 2023">
-                            </div>
-                        </div>
-                        
-                        <div class="admin-form-row">
-                            <div class="admin-form-group">
-                                <label for="bill_to">Bill To (Company Name)*</label>
-                                <input type="text" id="bill_to" name="bill_to" class="admin-form-control" required>
-                            </div>
-                            <div class="admin-form-group">
-                                <label for="company_pan">Company PAN</label>
-                                <input type="text" id="company_pan" name="company_pan" class="admin-form-control">
+                        <div class="bill-section">
+                            <h3 class="section-title">Bill Information</h3>
+                            
+                            <div class="admin-form-row">
+                                <div class="admin-form-group">
+                                    <label for="invoice_no">Invoice No*</label>
+                                    <input type="text" id="invoice_no" name="invoice_no" class="admin-form-control" required>
+                                </div>
+                                <div class="admin-form-group">
+                                    <label for="date">Date*</label>
+                                    <input type="date" id="date" name="date" class="admin-form-control" required>
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="admin-form-group">
-                            <label for="bill_to_address">Bill To Address*</label>
-                            <textarea id="bill_to_address" name="bill_to_address" class="admin-form-control" required placeholder="Full address with commas separating lines"></textarea>
+                        <div class="bill-section">
+                            <h3 class="section-title">Client Information</h3>
+                            
+                            <div class="admin-form-row">
+                                <div class="admin-form-group">
+                                    <label for="bill_to">Bill To (Company Name)*</label>
+                                    <input type="text" id="bill_to" name="bill_to" class="admin-form-control" required>
+                                </div>
+                                <div class="admin-form-group">
+                                    <label for="company_pan">Company PAN</label>
+                                    <input type="text" id="company_pan" name="company_pan" class="admin-form-control">
+                                </div>
+                            </div>
+                            
+                            <div class="admin-form-group">
+                                <label for="bill_to_address">Bill To Address*</label>
+                                <textarea id="bill_to_address" name="bill_to_address" class="admin-form-control" required placeholder="Full address with commas separating lines"></textarea>
+                            </div>
                         </div>
                         
-                        <div class="admin-form-row">
-                            <div class="admin-form-group">
-                                <label for="suppliers_ref_no">Supplier's Ref No</label>
-                                <input type="text" id="suppliers_ref_no" name="suppliers_ref_no" class="admin-form-control">
-                            </div>
-                            <div class="admin-form-group">
-                                <label for="buyers_order_no">Buyer's Order No</label>
-                                <input type="text" id="buyers_order_no" name="buyers_order_no" class="admin-form-control">
-                            </div>
-                            <div class="admin-form-group">
-                                <label for="other_terms">Other Terms</label>
-                                <input type="text" id="other_terms" name="other_terms" class="admin-form-control">
+                        <div class="bill-section">
+                            <h3 class="section-title">Reference Information</h3>
+                            
+                            <div class="admin-form-row">
+                                <div class="admin-form-group">
+                                    <label for="suppliers_ref_no">Supplier's Ref No</label>
+                                    <input type="text" id="suppliers_ref_no" name="suppliers_ref_no" class="admin-form-control">
+                                </div>
+                                <div class="admin-form-group">
+                                    <label for="buyers_order_no">Buyer's Order No</label>
+                                    <input type="text" id="buyers_order_no" name="buyers_order_no" class="admin-form-control">
+                                </div>
+                                <div class="admin-form-group">
+                                    <label for="other_terms">Other Terms</label>
+                                    <input type="text" id="other_terms" name="other_terms" class="admin-form-control">
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="admin-form-group">
-                            <label>Bill Items*</label>
-                            <div class="admin-table-responsive">
+                        <div class="bill-section">
+                            <h3 class="section-title">Bill Items*</h3>
+                            
+                            <div class="admin-table-responsive bill-items-table">
                                 <table class="admin-table" id="itemsTable">
                                     <thead>
                                         <tr>
@@ -181,53 +194,68 @@
                             </button>
                         </div>
                         
-                        <div class="admin-form-row">
-                            <div class="admin-form-group">
-                                <label for="sub_total">Sub Total*</label>
-                                <input type="number" id="sub_total" name="sub_total" class="admin-form-control" required step="0.01" min="0" readonly>
-                            </div>
-                            <div class="admin-form-group">
-                                <label for="gst">GST</label>
-                                <input type="number" id="gst" name="gst" class="admin-form-control" step="0.01" min="0">
-                            </div>
-                            <div class="admin-form-group">
-                                <label for="round_off">Round Off</label>
-                                <input type="number" id="round_off" name="round_off" class="admin-form-control" step="0.01">
-                            </div>
-                        </div>
-                        
-                        <div class="admin-form-row">
-                            <div class="admin-form-group">
-                                <label for="grand_total">Grand Total*</label>
-                                <input type="number" id="grand_total" name="grand_total" class="admin-form-control" required step="0.01" min="0">
-                            </div>
-                            <div class="admin-form-group">
-                                <label for="amount_in_words">Amount in Words*</label>
-                                <input type="text" id="amount_in_words" name="amount_in_words" class="admin-form-control" required>
-                                <div class="admin-form-help">e.g. Six Thousand Only</div>
-                            </div>
-                        </div>
-                        
-                        <div class="admin-form-row">
-                            <div class="admin-form-group">
-                                <div class="admin-form-checkbox">
-                                    <input type="checkbox" id="enable_feedback" name="enable_feedback">
-                                    <label for="enable_feedback">Enable feedback for this bill</label>
+                        <div class="bill-section">
+                            <h3 class="section-title">Bill Totals</h3>
+                            
+                            <div class="bill-totals">
+                                <div class="admin-form-row">
+                                    <div class="admin-form-group">
+                                        <label for="sub_total">Sub Total*</label>
+                                        <input type="number" id="sub_total" name="sub_total" class="admin-form-control amount-input" required step="0.01" min="0" readonly>
+                                    </div>
+                                    <div class="admin-form-group">
+                                        <label for="gst">GST</label>
+                                        <div class="gst-input-group">
+                                            <input type="text" id="gst" name="gst" class="admin-form-control amount-input" placeholder="e.g. 18% or 1800">
+                                            <div class="gst-amount" id="gstAmount">₹0.00</div>
+                                        </div>
+                                    </div>
+                                    <div class="admin-form-group">
+                                        <label for="round_off">Round Off</label>
+                                        <input type="number" id="round_off" name="round_off" class="admin-form-control amount-input" step="0.01">
+                                    </div>
+                                </div>
+                                
+                                <div class="admin-form-row">
+                                    <div class="admin-form-group">
+                                        <label for="grand_total">Grand Total*</label>
+                                        <input type="number" id="grand_total" name="grand_total" class="admin-form-control amount-input grand-total" required step="0.01" min="0">
+                                    </div>
+                                    <div class="admin-form-group">
+                                        <label for="amount_in_words">Amount in Words*</label>
+                                        <input type="text" id="amount_in_words" name="amount_in_words" class="admin-form-control amount-in-words" required readonly>
+                                        <div class="admin-form-help">Will be automatically generated from the grand total</div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="admin-form-group" id="projectSelectGroup" style="display: none;">
-                                <label for="project_slug">Link to Project</label>
-                                <select id="project_slug" name="project_slug" class="admin-form-select">
-                                    <option value="">Select a project</option>
-                                    <!-- Projects will be loaded dynamically -->
-                                </select>
-                                <div class="admin-form-help">Selecting a project will allow customers to provide feedback</div>
+                        </div>
+                        
+                        <div class="bill-section">
+                            <h3 class="section-title">Feedback Options</h3>
+                            
+                            <div class="admin-form-row">
+                                <div class="admin-form-group">
+                                    <div class="admin-form-checkbox">
+                                        <input type="checkbox" id="enable_feedback" name="enable_feedback">
+                                        <label for="enable_feedback">Enable feedback for this bill</label>
+                                    </div>
+                                </div>
+                                <div class="admin-form-group" id="projectSelectGroup" style="display: none;">
+                                    <label for="project_slug">Link to Project</label>
+                                    <select id="project_slug" name="project_slug" class="admin-form-select">
+                                        <option value="">Select a project</option>
+                                        <!-- Projects will be loaded dynamically -->
+                                    </select>
+                                    <div class="admin-form-help">Selecting a project will allow customers to provide feedback</div>
+                                </div>
                             </div>
                         </div>
                         
                         <div class="admin-form-buttons">
                             <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
-                            <button type="submit" class="btn btn-primary" id="saveBtn">Save Bill</button>
+                            <button type="submit" class="btn btn-primary" id="saveBtn">
+                                <i class="fas fa-save"></i> Save Bill
+                            </button>
                         </div>
                     </form>
                 </div>
