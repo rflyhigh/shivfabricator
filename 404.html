@@ -2015,32 +2015,6 @@ footer::before {
         padding: 30px 20px;
     }
     
-    /* Bill styles for mobile */
-    .bill-container {
-        margin: 80px 0 30px;
-        width: 100%;
-        max-width: none;
-        border-radius: 0;
-    }
-    
-    .bill-header, .bill-details {
-        padding: 20px 15px;
-    }
-    
-    .bill-items {
-        overflow-x: visible;
-    }
-    
-    .bill-items table {
-        width: 100%;
-        min-width: 0;
-        font-size: 0.85rem;
-    }
-    
-    .bill-actions {
-        flex-direction: row;
-        padding: 0 20px;
-    }
     
     .btn-download, .btn-print {
         flex: 1;
@@ -2104,6 +2078,66 @@ footer::before {
     .feedback-link a {
         display: block;
         width: 100%;
+    }
+}
+        /* Bill Styles for Mobile - Keep desktop appearance but scaled down */
+@media (max-width: 767.98px) {
+    .bill-container {
+        margin: 80px auto 30px;
+        width: 100%;
+        max-width: 900px;
+        transform: scale(0.9);
+        transform-origin: top center;
+    }
+    
+    .bill-header-content {
+        flex-direction: row; /* Keep the same as desktop */
+    }
+    
+    .bill-title {
+        text-align: right; /* Keep the same as desktop */
+    }
+    
+    .bill-info-row {
+        flex-direction: row; /* Keep the same as desktop */
+    }
+    
+    .bill-footer {
+        flex-direction: row; /* Keep the same as desktop */
+    }
+    
+    .bill-signature {
+        width: 40%; /* Keep the same as desktop */
+    }
+    
+    /* Remove any mobile-specific modifications */
+    .bill-items {
+        overflow-x: visible;
+    }
+    
+    .bill-items table {
+        min-width: 0;
+        width: 100%;
+        transform: none;
+        font-size: inherit;
+    }
+    
+    /* Let users zoom instead of reformatting */
+    .bill-details, .bill-header {
+        padding: 30px; /* Same as desktop */
+    }
+}
+
+@media (max-width: 480px) {
+    .bill-container {
+        transform: scale(0.7);
+        margin: 60px auto 0;
+    }
+    
+    /* Keep the action buttons visible and usable */
+    .bill-actions {
+        transform: scale(1); /* Reset scale for buttons */
+        margin-top: -30px; /* Adjust for the scaled container */
     }
 }
 </style>
