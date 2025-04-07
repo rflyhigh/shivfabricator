@@ -1,0 +1,46 @@
+/* Messages Management Specific Styles */
+
+/* Message Details */
+.message-details {
+    display: grid;
+    gap: 15px;
+}
+
+.message-detail-item {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 10px;
+}
+
+.message-detail-item strong {
+    color: var(--text-primary);
+}
+
+.message-detail-item span {
+    color: var(--text-secondary);
+}
+
+.message-content div {
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-radius: var(--border-radius);
+    color: var(--text-secondary);
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
+/* Responsive adjustments */
+@media (max-width: 575.98px) {
+    .message-detail-item {
+        grid-template-columns: 1fr;
+    }
+    
+    .message-detail-item strong {
+        margin-bottom: 5px;
+    }
+    
+    .message-content div {
+        padding: 12px;
+        font-size: 14px;
+    }
+}
