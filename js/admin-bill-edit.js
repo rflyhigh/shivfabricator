@@ -17,6 +17,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const suppliersRefNoInput = document.getElementById('suppliers_ref_no');
     const buyersOrderNoInput = document.getElementById('buyers_order_no');
     const otherTermsInput = document.getElementById('other_terms');
+    
+    // Company details elements
+    const companyNameInput = document.getElementById('company_name');
+    const companyEmailInput = document.getElementById('company_email');
+    const companyAddressInput = document.getElementById('company_address');
+    const companyContactInput = document.getElementById('company_contact');
+    const companyGstInput = document.getElementById('company_gst');
+    const companyPanInput = document.getElementById('company_pan');
+    const companyBankNameInput = document.getElementById('company_bank_name');
+    const companyAccountNoInput = document.getElementById('company_account_no');
+    const companyIfscInput = document.getElementById('company_ifsc');
+    
     const billItems = document.getElementById('billItems');
     const addBillItemBtn = document.getElementById('addBillItem');
     const subTotalInput = document.getElementById('sub_total');
@@ -48,6 +60,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add default item row
         updateItemNumbers();
+        
+        // Load default company details
+        loadCompanyDetails();
     }
     
     // Load projects for feedback
@@ -122,6 +137,35 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Functions
+    async function loadCompanyDetails() {
+        try {
+            const API_URL = window.adminUtils.API_URL;
+            
+            const response = await fetch(`${API_URL}/company-details`);
+            
+            if (!response.ok) {
+                console.error('Failed to load company details');
+                return;
+            }
+            
+            const company = await response.json();
+            
+            // Set company details form values
+            companyNameInput.value = company.name || '';
+            companyEmailInput.value = company.email || '';
+            companyAddressInput.value = company.address || '';
+            companyContactInput.value = company.contact || '';
+            companyGstInput.value = company.gst_no || '';
+            companyPanInput.value = company.pan || '';
+            companyBankNameInput.value = company.bank_name || '';
+            companyAccountNoInput.value = company.account_no || '';
+            companyIfscInput.value = company.ifsc_code || '';
+            
+        } catch (error) {
+            console.error('Error loading company details:', error);
+        }
+    }
+    
     async function loadBill() {
         try {
             const API_URL = window.adminUtils.API_URL;
@@ -162,6 +206,22 @@ document.addEventListener('DOMContentLoaded', function() {
             suppliersRefNoInput.value = bill.suppliers_ref_no || '';
             buyersOrderNoInput.value = bill.buyers_order_no || '';
             otherTermsInput.value = bill.other_terms || '';
+            
+            // Set company details if available in the bill
+            if (bill.company) {
+                companyNameInput.value = bill.company.name || '';
+                companyEmailInput.value = bill.company.email || '';
+                companyAddressInput.value = bill.company.address || '';
+                companyContactInput.value = bill.company.contact || '';
+                companyGstInput.value = bill.company.gst_no || '';
+                companyPanInput.value = bill.company.pan || '';
+                companyBankNameInput.value = bill.company.bank_name || '';
+                companyAccountNoInput.value = bill.company.account_no || '';
+                companyIfscInput.value = bill.company.ifsc_code || '';
+            } else {
+                // Load default company details
+                loadCompanyDetails();
+            }
             
             // Clear existing items and add from bill
             billItems.innerHTML = '';
@@ -482,7 +542,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 round_off: roundOffInput.value ? parseFloat(roundOffInput.value) : null,
                 grand_total: parseFloat(grandTotalInput.value),
                 amount_in_words: amountInWordsInput.value,
-                enable_feedback: enableFeedbackCheckbox.checked
+                enable_feedback: enableFeedbackCheckbox.checked,
+                // Include company details
+                company: {
+                    name: companyNameInput.value,
+                    email: companyEmailInput.value,
+                    address: companyAddressInput.value,
+                    contact: companyContactInput.value,
+                    gst_no: companyGstInput.value || null,
+                    pan: companyPanInput.value || null,
+                    bank_name: companyBankNameInput.value || null,
+                    account_no: companyAccountNoInput.value,
+                    ifsc_code: companyIfscInput.value
+                }
             };
             
             // Add project slug if feedback is enabled
