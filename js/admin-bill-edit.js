@@ -9,6 +9,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const billTitle = document.getElementById('billTitle');
     const formTitle = document.getElementById('formTitle');
     const billIdInput = document.getElementById('billId');
+    
+    // Company details
+    const companyNameInput = document.getElementById('company_name');
+    const companyAddressInput = document.getElementById('company_address');
+    const companyContactInput = document.getElementById('company_contact');
+    const companyEmailInput = document.getElementById('company_email');
+    const companyPanNumberInput = document.getElementById('company_pan_number');
+    
+    // Bank details
+    const bankBeneficiaryInput = document.getElementById('bank_beneficiary');
+    const bankAccountNoInput = document.getElementById('bank_account_no');
+    const bankIfscCodeInput = document.getElementById('bank_ifsc_code');
+    
+    // Bill details
     const invoiceNoInput = document.getElementById('invoice_no');
     const dateInput = document.getElementById('date');
     const billToInput = document.getElementById('bill_to');
@@ -38,6 +52,19 @@ document.addEventListener('DOMContentLoaded', function() {
         billIdInput.value = billId;
     }
     
+    // Set default company values
+    function setDefaultCompanyValues() {
+        companyNameInput.value = "SHIVA FABRICATION";
+        companyAddressInput.value = "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015";
+        companyContactInput.value = "8805954132 / 9096553951";
+        companyEmailInput.value = "shivfabricator1@gmail.com";
+        companyPanNumberInput.value = "ABCDE1234F"; // Replace with actual PAN
+        
+        bankBeneficiaryInput.value = "SHIVA FABRICATION";
+        bankAccountNoInput.value = "110504180001097";
+        bankIfscCodeInput.value = "SVCB0000105";
+    }
+    
     // Load data
     if (isEditMode) {
         loadBill();
@@ -45,6 +72,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Set default date to today
         const today = new Date().toISOString().split('T')[0];
         dateInput.value = today;
+        
+        // Set default company values
+        setDefaultCompanyValues();
         
         // Add default item row
         updateItemNumbers();
@@ -138,6 +168,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             const bill = await response.json();
+            
+            // Set company details
+            companyNameInput.value = bill.company_name || "SHIVA FABRICATION";
+            companyAddressInput.value = bill.company_address || "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015";
+            companyContactInput.value = bill.company_contact || "8805954132 / 9096553951";
+            companyEmailInput.value = bill.company_email || "shivfabricator1@gmail.com";
+            companyPanNumberInput.value = bill.company_pan_number || "ABCDE1234F";
+            
+            // Set bank details
+            bankBeneficiaryInput.value = bill.bank_beneficiary || "SHIVA FABRICATION";
+            bankAccountNoInput.value = bill.bank_account_no || "110504180001097";
+            bankIfscCodeInput.value = bill.bank_ifsc_code || "SVCB0000105";
             
             // Set form values
             invoiceNoInput.value = bill.invoice_no;
@@ -482,7 +524,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 round_off: roundOffInput.value ? parseFloat(roundOffInput.value) : null,
                 grand_total: parseFloat(grandTotalInput.value),
                 amount_in_words: amountInWordsInput.value,
-                enable_feedback: enableFeedbackCheckbox.checked
+                enable_feedback: enableFeedbackCheckbox.checked,
+                
+                // Company details
+                company_name: companyNameInput.value,
+                company_address: companyAddressInput.value,
+                company_contact: companyContactInput.value,
+                company_email: companyEmailInput.value,
+                company_pan_number: companyPanNumberInput.value || null,
+                
+                // Bank details
+                bank_beneficiary: bankBeneficiaryInput.value,
+                bank_account_no: bankAccountNoInput.value,
+                bank_ifsc_code: bankIfscCodeInput.value
             };
             
             // Add project slug if feedback is enabled
