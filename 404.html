@@ -2166,6 +2166,366 @@ footer::before {
         font-size: 0.9rem;
     }
 }
+        /* Comprehensive Mobile Layout Fixes */
+
+/* Fix for project header and content */
+@media (max-width: 991.98px) {
+    /* Project header fixes */
+    .project-header {
+        padding: 120px 20px 40px;
+        text-align: left;
+    }
+    
+    .project-header h1 {
+        font-size: 2rem;
+        line-height: 1.2;
+        margin-bottom: 20px;
+        width: 100%;
+        word-wrap: break-word;
+    }
+    
+    .project-meta {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+    
+    .project-meta span {
+        margin-right: 0;
+        font-size: 0.95rem;
+    }
+    
+    /* Project content layout fixes */
+    .project-details {
+        padding: 40px 20px;
+    }
+    
+    .project-details .container {
+        display: block;
+        padding: 0;
+    }
+    
+    .project-overview, 
+    .project-scope, 
+    .project-challenges, 
+    .project-results {
+        margin-bottom: 40px;
+    }
+    
+    .project-overview h2, 
+    .project-scope h2, 
+    .project-challenges h2, 
+    .project-results h2 {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+    }
+    
+    /* Content containers */
+    .container {
+        width: 100%;
+        padding: 0 15px;
+    }
+    
+    /* Gallery fixes */
+    .project-gallery {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+    
+    .gallery-item {
+        height: 180px;
+    }
+    
+    /* Project specifications section */
+    .project-sidebar {
+        margin-top: 40px;
+    }
+    
+    .sidebar-widget {
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .sidebar-widget h3 {
+        font-size: 1.3rem;
+        margin-bottom: 15px;
+    }
+    
+    /* Project navigation */
+    .project-navigation {
+        padding: 20px 0;
+    }
+    
+    .nav-links {
+        position: fixed;
+        top: 0;
+        left: -280px;
+        width: 280px;
+        height: 100vh;
+        background-color: #121212;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 100px 30px 30px;
+        transition: all 0.3s ease;
+        z-index: 1000;
+        overflow-y: auto;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .nav-links.active {
+        left: 0;
+        right: auto;
+    }
+    
+    /* Navigation items */
+    .nav-links li {
+        margin: 0;
+        width: 100%;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .nav-links li:last-child {
+        border-bottom: none;
+    }
+    
+    .nav-links a {
+        display: block;
+        width: 100%;
+        padding: 8px 0;
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+    }
+    
+    .nav-links a.active {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+    
+    .nav-links a.active::after {
+        width: 100%;
+        opacity: 1;
+    }
+    
+    /* Header adjustments */
+    header {
+        height: 70px;
+        background-color: rgba(18, 18, 18, 0.98);
+    }
+    
+    header .container {
+        padding: 0 15px;
+    }
+    
+    .logo img {
+        max-height: 35px;
+    }
+    
+    /* Sidebar logo */
+    .sidebar-logo {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+    }
+    
+    .sidebar-logo img {
+        height: 40px;
+    }
+    
+    /* Better hamburger menu */
+    .hamburger {
+        display: block;
+        margin-left: 0;
+        margin-right: 0;
+        cursor: pointer;
+        z-index: 1001;
+    }
+    
+    .hamburger .line {
+        width: 25px;
+        height: 2px;
+        background-color: var(--text-primary);
+        margin: 6px 0;
+        transition: 0.3s;
+    }
+    
+    /* Overlay */
+    .mobile-nav-overlay {
+        background-color: rgba(0, 0, 0, 0.7);
+    }
+    
+    /* Close button */
+    .mobile-nav-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-secondary);
+    }
+}
+
+/* Project Specifications Section Fix */
+.project-specifications {
+    margin-top: 20px;
+    padding: 25px;
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.project-specifications h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: var(--text-primary);
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.spec-list {
+    list-style: none;
+    padding: 0;
+}
+
+.spec-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.spec-list li:last-child {
+    border-bottom: none;
+}
+
+/* Fixing the project overview section */
+.project-content {
+    margin-bottom: 40px;
+}
+
+.project-overview p {
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+
+/* Extra small screen fixes */
+@media (max-width: 480px) {
+    /* Project header further adjustments */
+    .project-header {
+        padding: 100px 15px 30px;
+    }
+    
+    .project-header h1 {
+        font-size: 1.8rem;
+    }
+    
+    /* Smaller headings */
+    .project-overview h2, 
+    .project-scope h2, 
+    .project-challenges h2, 
+    .project-results h2,
+    .project-specifications h2 {
+        font-size: 1.3rem;
+    }
+    
+    /* Tighter spacing */
+    .project-details {
+        padding: 30px 15px;
+    }
+    
+    /* Challenge items */
+    .challenge-item {
+        padding: 15px;
+    }
+    
+    .challenge-item h3 {
+        font-size: 1.1rem;
+    }
+    
+    /* Sidebar widgets */
+    .sidebar-widget {
+        padding: 15px;
+    }
+    
+    /* Footer adjustments */
+    footer {
+        padding: 50px 0 0;
+    }
+    
+    .footer-content {
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+}
+
+/* Light theme adjustments */
+[data-theme="light"] .nav-links {
+    background-color: #f8f9fa;
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .nav-links li {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .mobile-nav-close {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .spec-list li {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Fix for projects with long titles */
+.project-header h1 {
+    word-wrap: break-word;
+    max-width: 100%;
+    overflow-wrap: break-word;
+}
+
+/* Fix for content containers */
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+@media (max-width: 767.98px) {
+    .container {
+        padding: 0 15px;
+    }
+}
+
+/* Fix for image overflow */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Better spacing for project navigation */
+.project-navigation .container {
+    padding: 0 15px;
+}
+
+.back-to-projects {
+    padding: 10px 15px;
+    font-size: 0.9rem;
+}
+
+/* Animation for sidebar */
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+.nav-links.active {
+    animation: slideInLeft 0.3s forwards;
+}
 </style>
 </head>
 <body>
