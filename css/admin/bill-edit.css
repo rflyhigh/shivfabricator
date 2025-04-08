@@ -324,3 +324,39 @@
         font-size: 0.85rem;
     }
 }
+/* Add to bill-edit.css */
+.company-info-notice {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: var(--info-bg);
+    color: var(--info-color);
+    padding: 10px 15px;
+    border-radius: var(--border-radius);
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.company-info-notice i {
+    font-size: 16px;
+    color: var(--info-icon);
+}
+
+.company-info-notice a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.company-info-notice a:hover {
+    text-decoration: underline;
+}
+
+.subsection-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+    border-bottom: 1px dashed var(--border-color);
+}
