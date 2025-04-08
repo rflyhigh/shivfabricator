@@ -237,13 +237,22 @@ class Bill(BaseModel):
     enable_feedback: bool = False
     project_slug: Optional[str] = None
     feedback_code: Optional[str] = None
+    # New fields for company details
+    company_name: str = "SHIVA FABRICATION"
+    company_address: str = "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015"
+    company_contact: str = "8805954132 / 9096553951"
+    company_email: str = "shivfabricator1@gmail.com"
+    company_pan_number: Optional[str] = "ABCDE1234F"  # Added PAN number
+    bank_beneficiary: str = "SHIVA FABRICATION"
+    bank_account_no: str = "110504180001097"
+    bank_ifsc_code: str = "SVCB0000105"
     
     class Config:
         arbitrary_types_allowed = True
         json_encoders = {
             ObjectId: str
         }
-
+        
 class BillInDB(Bill):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -274,6 +283,15 @@ class BillUpdate(BaseModel):
     amount_in_words: Optional[str] = None
     enable_feedback: Optional[bool] = None
     project_slug: Optional[str] = None
+    # New fields for company details
+    company_name: Optional[str] = None
+    company_address: Optional[str] = None
+    company_contact: Optional[str] = None
+    company_email: Optional[str] = None
+    company_pan_number: Optional[str] = None
+    bank_beneficiary: Optional[str] = None
+    bank_account_no: Optional[str] = None
+    bank_ifsc_code: Optional[str] = None
     
     class Config:
         arbitrary_types_allowed = True
@@ -700,10 +718,13 @@ def render_bill_template(bill):
     <div class="bill-container">
         <div class="bill-header">
             <div class="bill-company">
-                <h2>SHIVA FABRICATION</h2>
-                <p>Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015</p>
-                <p>Contact: 8805954132 / 9096553951</p>
-                <p>Email: shivfabricator1@gmail.com</p>
+                <h2>{{ bill.company_name }}</h2>
+                <p>{{ bill.company_address }}</p>
+                <p>Contact: {{ bill.company_contact }}</p>
+                <p>Email: {{ bill.company_email }}</p>
+                {% if bill.company_pan_number %}
+                <p>PAN: {{ bill.company_pan_number }}</p>
+                {% endif %}
             </div>
             <div class="bill-title">
                 <h1>INVOICE</h1>
@@ -818,7 +839,7 @@ def render_bill_template(bill):
                 </div>
                 
                 <div class="bill-signature">
-                    <div class="bill-signature-title">For SHIVA FABRICATION</div>
+                    <div class="bill-signature-title">For {{ bill.company_name }}</div>
                     <div class="bill-signature-line"></div>
                     <div class="bill-signature-name">Proprietor</div>
                 </div>
@@ -826,9 +847,9 @@ def render_bill_template(bill):
             
             <div class="bill-bank">
                 <h3>Bank Details</h3>
-                <p>Name of the Beneficiary: SHIVA FABRICATION</p>
-                <p>A/C NO. 110504180001097</p>
-                <p>IFSC CODE: SVCB0000105</p>
+                <p>Name of the Beneficiary: {{ bill.bank_beneficiary }}</p>
+                <p>A/C NO. {{ bill.bank_account_no }}</p>
+                <p>IFSC CODE: {{ bill.bank_ifsc_code }}</p>
             </div>
             
             <div class="bill-notes">
