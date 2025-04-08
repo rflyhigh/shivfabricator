@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const dateInput = document.getElementById('date');
     const billToInput = document.getElementById('bill_to');
     const billToAddressInput = document.getElementById('bill_to_address');
-    const companyPanInput = document.getElementById('company_pan');
+    const clientPanInput = document.getElementById('company_pan'); // Renamed to clientPanInput
     const suppliersRefNoInput = document.getElementById('suppliers_ref_no');
     const buyersOrderNoInput = document.getElementById('buyers_order_no');
     const otherTermsInput = document.getElementById('other_terms');
@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             billToInput.value = bill.bill_to;
             billToAddressInput.value = bill.bill_to_address;
-            companyPanInput.value = bill.company_pan || '';
+            clientPanInput.value = bill.company_pan || ''; // Updated to clientPanInput
             suppliersRefNoInput.value = bill.suppliers_ref_no || '';
             buyersOrderNoInput.value = bill.buyers_order_no || '';
             otherTermsInput.value = bill.other_terms || '';
@@ -543,7 +543,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 date: dateInput.value,
                 bill_to: billToInput.value,
                 bill_to_address: billToAddressInput.value,
-                company_pan: companyPanInput.value || null,
+                company_pan: clientPanInput.value || null, // Updated to clientPanInput
                 suppliers_ref_no: suppliersRefNoInput.value || null,
                 buyers_order_no: buyersOrderNoInput.value || null,
                 other_terms: otherTermsInput.value || null,
