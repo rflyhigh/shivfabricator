@@ -158,34 +158,7 @@ class ProjectUpdate(BaseModel):
         json_encoders = {
             ObjectId: str
         }
-        
-# Add this to your models section
-class CompanyDetails(BaseModel):
-    name: str
-    address: str
-    contact: str
-    email: str
-    pan: Optional[str] = None
-    bank_name: Optional[str] = None
-    account_no: Optional[str] = None
-    ifsc_code: Optional[str] = None
-    gst_no: Optional[str] = None
-    
-    class Config:
-        arbitrary_types_allowed = True
-        json_encoders = {
-            ObjectId: str
-        }
 
-class CompanyDetailsInDB(CompanyDetails):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    
-    class Config:
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {
-            ObjectId: str
-        }
 class ContactMessage(BaseModel):
     name: str
     email: EmailStr
@@ -464,7 +437,7 @@ async def generate_pdf_with_browserless(html_content: str) -> BytesIO:
             detail=f"PDF generation failed: {str(e)}"
         )
 
-def render_bill_template(bill, company_details):
+def render_bill_template(bill):
     """Render HTML bill template using Jinja2"""
     # Create a Jinja2 template environment
     template_dir = Path(__file__).parent / "templates"
@@ -727,16 +700,10 @@ def render_bill_template(bill, company_details):
     <div class="bill-container">
         <div class="bill-header">
             <div class="bill-company">
-                <h2>{{ company.name }}</h2>
-                <p>{{ company.address }}</p>
-                <p>Contact: {{ company.contact }}</p>
-                <p>Email: {{ company.email }}</p>
-                {% if company.gst_no %}
-                <p>GST No: {{ company.gst_no }}</p>
-                {% endif %}
-                {% if company.pan %}
-                <p>PAN: {{ company.pan }}</p>
-                {% endif %}
+                <h2>SHIVA FABRICATION</h2>
+                <p>Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015</p>
+                <p>Contact: 8805954132 / 9096553951</p>
+                <p>Email: shivfabricator1@gmail.com</p>
             </div>
             <div class="bill-title">
                 <h1>INVOICE</h1>
@@ -851,7 +818,7 @@ def render_bill_template(bill, company_details):
                 </div>
                 
                 <div class="bill-signature">
-                    <div class="bill-signature-title">For {{ company.name }}</div>
+                    <div class="bill-signature-title">For SHIVA FABRICATION</div>
                     <div class="bill-signature-line"></div>
                     <div class="bill-signature-name">Proprietor</div>
                 </div>
@@ -859,10 +826,9 @@ def render_bill_template(bill, company_details):
             
             <div class="bill-bank">
                 <h3>Bank Details</h3>
-                {% if company.bank_name %}<p>Bank Name: {{ company.bank_name }}</p>{% endif %}
-                <p>Name of the Beneficiary: {{ company.name }}</p>
-                <p>A/C NO. {{ company.account_no }}</p>
-                <p>IFSC CODE: {{ company.ifsc_code }}</p>
+                <p>Name of the Beneficiary: SHIVA FABRICATION</p>
+                <p>A/C NO. 110504180001097</p>
+                <p>IFSC CODE: SVCB0000105</p>
             </div>
             
             <div class="bill-notes">
@@ -888,9 +854,9 @@ def render_bill_template(bill, company_details):
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
     template = env.get_template("bill_template.html")
     
-    # Render the template with the bill data and company details
+    # Render the template with the bill data
     base_url = os.getenv("BASE_URL", "https://shivafabrications.versz.fun")
-    html_content = template.render(bill=bill, company=company_details, base_url=base_url)
+    html_content = template.render(bill=bill, base_url=base_url)
     
     return html_content
 
@@ -932,50 +898,7 @@ async def get_feedback_code_info(code: str):
         "project_name": project["title"] if project else None,
         "service_type": project["category"] if project else None
     }
-# Add these endpoints to your API routes section
 
-@app.get("/api/company-details", response_model=CompanyDetails)
-async def get_company_details():
-    """Get company details for invoices"""
-    company = await db.company_details.find_one()
-    
-    # If no company details exist, create default ones
-    if not company:
-        default_company = {
-            "name": "SHIVA FABRICATION",
-            "address": "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015",
-            "contact": "8805954132 / 9096553951",
-            "email": "shivfabricator1@gmail.com",
-            "bank_name": "SVC Bank",
-            "account_no": "110504180001097",
-            "ifsc_code": "SVCB0000105"
-        }
-        
-        result = await db.company_details.insert_one(default_company)
-        company = await db.company_details.find_one({"_id": result.inserted_id})
-    
-    return company
-
-@app.put("/api/company-details", response_model=CompanyDetails)
-async def update_company_details(
-    company_update: CompanyDetails,
-    current_user: User = Depends(get_current_active_user)
-):
-    """Update company details for invoices"""
-    company = await db.company_details.find_one()
-    
-    if not company:
-        # Create if doesn't exist
-        result = await db.company_details.insert_one(company_update.dict())
-        updated_company = await db.company_details.find_one({"_id": result.inserted_id})
-    else:
-        # Update existing
-        await db.company_details.update_one(
-            {"_id": company["_id"]}, {"$set": company_update.dict()}
-        )
-        updated_company = await db.company_details.find_one({"_id": company["_id"]})
-    
-    return updated_company
 @app.post("/api/projects", response_model=Project)
 async def create_project(project: ProjectCreate, current_user: User = Depends(get_current_active_user)):
     # Check if slug already exists
@@ -1244,6 +1167,7 @@ async def get_stats(current_user: User = Depends(get_current_active_user)):
         "average_rating": avg_rating
     }
 
+# Bill-related endpoints
 @app.post("/api/bills", response_model=Dict[str, Any])
 async def create_bill(bill: Bill, current_user: User = Depends(get_current_active_user)):
     bill_dict = bill.dict()
@@ -1268,17 +1192,10 @@ async def create_bill(bill: Bill, current_user: User = Depends(get_current_activ
         
         bill_dict["feedback_code"] = feedback_code
     
-    # Extract company details if provided
-    company_data = bill_dict.pop("company", None)
-    
     # Generate a unique bill code
     bill_dict["bill_code"] = str(uuid.uuid4())
     bill_dict["created_at"] = datetime.utcnow()
     bill_dict["updated_at"] = bill_dict["created_at"]
-    
-    # Store company details with the bill if provided
-    if company_data:
-        bill_dict["company_details"] = company_data
     
     result = await db.bills.insert_one(bill_dict)
     created_bill = await db.bills.find_one({"_id": result.inserted_id})
@@ -1322,19 +1239,18 @@ async def get_bill_by_id(bill_id: str, current_user: User = Depends(get_current_
 @app.put("/api/bills/{bill_id}", response_model=Dict[str, Any])
 async def update_bill(
     bill_id: str,
-    bill_update: Dict[str, Any],  # Use Dict instead of BillUpdate to allow company field
+    bill_update: BillUpdate,
     current_user: User = Depends(get_current_active_user)
 ):
     bill = await db.bills.find_one({"_id": ObjectId(bill_id)})
     if not bill:
         raise HTTPException(status_code=404, detail="Bill not found")
     
-    # Extract company details if provided
-    company_data = bill_update.pop("company", None)
+    update_data = bill_update.dict(exclude_unset=True)
     
     # Handle feedback linking if needed
-    if bill_update.get("enable_feedback") and bill_update.get("project_slug"):
-        project = await db.projects.find_one({"slug": bill_update["project_slug"]})
+    if "enable_feedback" in update_data and update_data["enable_feedback"] and "project_slug" in update_data:
+        project = await db.projects.find_one({"slug": update_data["project_slug"]})
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
         
@@ -1350,17 +1266,13 @@ async def update_bill(
         else:
             feedback_code = code_doc["code"]
         
-        bill_update["feedback_code"] = feedback_code
+        update_data["feedback_code"] = feedback_code
     
-    # Store company details with the bill if provided
-    if company_data:
-        bill_update["company_details"] = company_data
-    
-    bill_update["updated_at"] = datetime.utcnow()
-    
-    await db.bills.update_one(
-        {"_id": ObjectId(bill_id)}, {"$set": bill_update}
-    )
+    if update_data:
+        update_data["updated_at"] = datetime.utcnow()
+        await db.bills.update_one(
+            {"_id": ObjectId(bill_id)}, {"$set": update_data}
+        )
     
     updated_bill = await db.bills.find_one({"_id": ObjectId(bill_id)})
     
@@ -1383,28 +1295,12 @@ async def download_bill_pdf(bill_id: str):
     if not bill:
         raise HTTPException(status_code=404, detail="Bill not found")
     
-    # Get company details - first try bill-specific details, then fallback to global
-    company_details = bill.get("company_details")
-    if not company_details:
-        company_details = await db.company_details.find_one()
-        if not company_details:
-            # Use default company details if none exist
-            company_details = {
-                "name": "SHIVA FABRICATION",
-                "address": "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015",
-                "contact": "8805954132 / 9096553951",
-                "email": "shivfabricator1@gmail.com",
-                "bank_name": "SVC Bank",
-                "account_no": "110504180001097",
-                "ifsc_code": "SVCB0000105"
-            }
-    
     # Convert to BillInDB model
     bill_model = BillInDB(**serialize_mongo_doc(bill))
     
     try:
         # Generate HTML content from template
-        html_content = render_bill_template(bill_model, company_details)
+        html_content = render_bill_template(bill_model)
         
         # Generate PDF using Browserless
         pdf_buffer = await generate_pdf_with_browserless(html_content)
@@ -1434,22 +1330,6 @@ async def get_bill_by_code(bill_code: str):
     if not bill:
         raise HTTPException(status_code=404, detail="Bill not found")
     
-    # Get company details - first try bill-specific details, then fallback to global
-    company_details = bill.get("company_details")
-    if not company_details:
-        company_details = await db.company_details.find_one()
-        if not company_details:
-            # Use default company details if none exist
-            company_details = {
-                "name": "SHIVA FABRICATION",
-                "address": "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015",
-                "contact": "8805954132 / 9096553951",
-                "email": "shivfabricator1@gmail.com",
-                "bank_name": "SVC Bank",
-                "account_no": "110504180001097",
-                "ifsc_code": "SVCB0000105"
-            }
-    
     # Convert to a serializable format
     bill_dict = serialize_mongo_doc(bill)
     
@@ -1461,11 +1341,19 @@ async def get_bill_by_code(bill_code: str):
         bill_dict["feedback_url"] = get_feedback_url(bill_dict["feedback_code"])
     
     # Add company details
-    bill_dict["company"] = company_details
+    bill_dict["company"] = {
+        "name": "SHIVA FABRICATION",
+        "address": "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015",
+        "contact": "8805954132 / 9096553951",
+        "email": "shivfabricator1@gmail.com",
+        "bank_details": {
+            "beneficiary": "SHIVA FABRICATION",
+            "account_no": "110504180001097",
+            "ifsc_code": "SVCB0000105"
+        }
+    }
     
     return bill_dict
-
-
 
 # Keep the server alive by pinging the health endpoint every 10 minutes
 async def keep_alive():
