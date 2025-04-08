@@ -1244,7 +1244,6 @@ async def get_stats(current_user: User = Depends(get_current_active_user)):
         "average_rating": avg_rating
     }
 
-# Bill-related endpoints
 @app.post("/api/bills", response_model=Dict[str, Any])
 async def create_bill(bill: Bill, current_user: User = Depends(get_current_active_user)):
     bill_dict = bill.dict()
@@ -1269,10 +1268,17 @@ async def create_bill(bill: Bill, current_user: User = Depends(get_current_activ
         
         bill_dict["feedback_code"] = feedback_code
     
+    # Extract company details if provided
+    company_data = bill_dict.pop("company", None)
+    
     # Generate a unique bill code
     bill_dict["bill_code"] = str(uuid.uuid4())
     bill_dict["created_at"] = datetime.utcnow()
     bill_dict["updated_at"] = bill_dict["created_at"]
+    
+    # Store company details with the bill if provided
+    if company_data:
+        bill_dict["company_details"] = company_data
     
     result = await db.bills.insert_one(bill_dict)
     created_bill = await db.bills.find_one({"_id": result.inserted_id})
@@ -1316,18 +1322,19 @@ async def get_bill_by_id(bill_id: str, current_user: User = Depends(get_current_
 @app.put("/api/bills/{bill_id}", response_model=Dict[str, Any])
 async def update_bill(
     bill_id: str,
-    bill_update: BillUpdate,
+    bill_update: Dict[str, Any],  # Use Dict instead of BillUpdate to allow company field
     current_user: User = Depends(get_current_active_user)
 ):
     bill = await db.bills.find_one({"_id": ObjectId(bill_id)})
     if not bill:
         raise HTTPException(status_code=404, detail="Bill not found")
     
-    update_data = bill_update.dict(exclude_unset=True)
+    # Extract company details if provided
+    company_data = bill_update.pop("company", None)
     
     # Handle feedback linking if needed
-    if "enable_feedback" in update_data and update_data["enable_feedback"] and "project_slug" in update_data:
-        project = await db.projects.find_one({"slug": update_data["project_slug"]})
+    if bill_update.get("enable_feedback") and bill_update.get("project_slug"):
+        project = await db.projects.find_one({"slug": bill_update["project_slug"]})
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
         
@@ -1343,13 +1350,17 @@ async def update_bill(
         else:
             feedback_code = code_doc["code"]
         
-        update_data["feedback_code"] = feedback_code
+        bill_update["feedback_code"] = feedback_code
     
-    if update_data:
-        update_data["updated_at"] = datetime.utcnow()
-        await db.bills.update_one(
-            {"_id": ObjectId(bill_id)}, {"$set": update_data}
-        )
+    # Store company details with the bill if provided
+    if company_data:
+        bill_update["company_details"] = company_data
+    
+    bill_update["updated_at"] = datetime.utcnow()
+    
+    await db.bills.update_one(
+        {"_id": ObjectId(bill_id)}, {"$set": bill_update}
+    )
     
     updated_bill = await db.bills.find_one({"_id": ObjectId(bill_id)})
     
@@ -1372,19 +1383,21 @@ async def download_bill_pdf(bill_id: str):
     if not bill:
         raise HTTPException(status_code=404, detail="Bill not found")
     
-    # Get company details
-    company_details = await db.company_details.find_one()
+    # Get company details - first try bill-specific details, then fallback to global
+    company_details = bill.get("company_details")
     if not company_details:
-        # Use default company details if none exist
-        company_details = {
-            "name": "SHIVA FABRICATION",
-            "address": "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015",
-            "contact": "8805954132 / 9096553951",
-            "email": "shivfabricator1@gmail.com",
-            "bank_name": "SVC Bank",
-            "account_no": "110504180001097",
-            "ifsc_code": "SVCB0000105"
-        }
+        company_details = await db.company_details.find_one()
+        if not company_details:
+            # Use default company details if none exist
+            company_details = {
+                "name": "SHIVA FABRICATION",
+                "address": "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015",
+                "contact": "8805954132 / 9096553951",
+                "email": "shivfabricator1@gmail.com",
+                "bank_name": "SVC Bank",
+                "account_no": "110504180001097",
+                "ifsc_code": "SVCB0000105"
+            }
     
     # Convert to BillInDB model
     bill_model = BillInDB(**serialize_mongo_doc(bill))
@@ -1421,23 +1434,24 @@ async def get_bill_by_code(bill_code: str):
     if not bill:
         raise HTTPException(status_code=404, detail="Bill not found")
     
-    # Get company details
-    company_details = await db.company_details.find_one()
+    # Get company details - first try bill-specific details, then fallback to global
+    company_details = bill.get("company_details")
     if not company_details:
-        # Use default company details if none exist
-        company_details = {
-            "name": "SHIVA FABRICATION",
-            "address": "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015",
-            "contact": "8805954132 / 9096553951",
-            "email": "shivfabricator1@gmail.com",
-            "bank_name": "SVC Bank",
-            "account_no": "110504180001097",
-            "ifsc_code": "SVCB0000105"
-        }
+        company_details = await db.company_details.find_one()
+        if not company_details:
+            # Use default company details if none exist
+            company_details = {
+                "name": "SHIVA FABRICATION",
+                "address": "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015",
+                "contact": "8805954132 / 9096553951",
+                "email": "shivfabricator1@gmail.com",
+                "bank_name": "SVC Bank",
+                "account_no": "110504180001097",
+                "ifsc_code": "SVCB0000105"
+            }
     
     # Convert to a serializable format
     bill_dict = serialize_mongo_doc(bill)
-    company_dict = serialize_mongo_doc(company_details)
     
     # Add download URL
     bill_dict["download_url"] = f"/api/bills/{bill_dict['_id']}/download"
@@ -1447,7 +1461,7 @@ async def get_bill_by_code(bill_code: str):
         bill_dict["feedback_url"] = get_feedback_url(bill_dict["feedback_code"])
     
     # Add company details
-    bill_dict["company"] = company_dict
+    bill_dict["company"] = company_details
     
     return bill_dict
 
