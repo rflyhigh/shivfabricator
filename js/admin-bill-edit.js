@@ -208,7 +208,18 @@ document.addEventListener('DOMContentLoaded', function() {
             otherTermsInput.value = bill.other_terms || '';
             
             // Set company details if available in the bill
-            if (bill.company) {
+            if (bill.company_details) {
+                companyNameInput.value = bill.company_details.name || '';
+                companyEmailInput.value = bill.company_details.email || '';
+                companyAddressInput.value = bill.company_details.address || '';
+                companyContactInput.value = bill.company_details.contact || '';
+                companyGstInput.value = bill.company_details.gst_no || '';
+                companyPanInput.value = bill.company_details.pan || '';
+                companyBankNameInput.value = bill.company_details.bank_name || '';
+                companyAccountNoInput.value = bill.company_details.account_no || '';
+                companyIfscInput.value = bill.company_details.ifsc_code || '';
+            } else if (bill.company) {
+                // Fallback to company field if company_details is not available
                 companyNameInput.value = bill.company.name || '';
                 companyEmailInput.value = bill.company.email || '';
                 companyAddressInput.value = bill.company.address || '';
@@ -544,7 +555,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 amount_in_words: amountInWordsInput.value,
                 enable_feedback: enableFeedbackCheckbox.checked,
                 // Include company details
-                company: {
+                company_details: {
                     name: companyNameInput.value,
                     email: companyEmailInput.value,
                     address: companyAddressInput.value,
