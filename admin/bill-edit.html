@@ -52,6 +52,12 @@
                             <span>Bills</span>
                         </a>
                     </li>
+                    <li class="sidebar-menu-item">
+                        <a href="company-settings.html" class="sidebar-menu-link">
+                            <i class="fas fa-building"></i>
+                            <span>Company Settings</span>
+                        </a>
+                    </li>
                 </ul>
             </nav>
             
@@ -116,6 +122,64 @@
                         </div>
                         
                         <div class="bill-section">
+                            <h3 class="section-title">Company Information</h3>
+                            <div class="company-info-notice">
+                                <i class="fas fa-info-circle"></i>
+                                <span>This information will be displayed on the invoice. You can change these values for this specific invoice, or update the default values in <a href="company-settings.html">Company Settings</a>.</span>
+                            </div>
+                            
+                            <div class="admin-form-row">
+                                <div class="admin-form-group">
+                                    <label for="company_name">Company Name*</label>
+                                    <input type="text" id="company_name" name="company_name" class="admin-form-control" required>
+                                </div>
+                                <div class="admin-form-group">
+                                    <label for="company_email">Email*</label>
+                                    <input type="email" id="company_email" name="company_email" class="admin-form-control" required>
+                                </div>
+                            </div>
+                            
+                            <div class="admin-form-group">
+                                <label for="company_address">Address*</label>
+                                <textarea id="company_address" name="company_address" class="admin-form-control" required rows="2"></textarea>
+                            </div>
+                            
+                            <div class="admin-form-row">
+                                <div class="admin-form-group">
+                                    <label for="company_contact">Contact Numbers*</label>
+                                    <input type="text" id="company_contact" name="company_contact" class="admin-form-control" required>
+                                </div>
+                                <div class="admin-form-group">
+                                    <label for="company_gst">GST Number</label>
+                                    <input type="text" id="company_gst" name="company_gst" class="admin-form-control">
+                                </div>
+                                <div class="admin-form-group">
+                                    <label for="company_pan">PAN Number</label>
+                                    <input type="text" id="company_pan" name="company_pan" class="admin-form-control">
+                                </div>
+                            </div>
+                            
+                            <div class="admin-form-section">
+                                <h4 class="subsection-title">Bank Details</h4>
+                                
+                                <div class="admin-form-row">
+                                    <div class="admin-form-group">
+                                        <label for="company_bank_name">Bank Name</label>
+                                        <input type="text" id="company_bank_name" name="company_bank_name" class="admin-form-control">
+                                    </div>
+                                    <div class="admin-form-group">
+                                        <label for="company_account_no">Account Number*</label>
+                                        <input type="text" id="company_account_no" name="company_account_no" class="admin-form-control" required>
+                                    </div>
+                                    <div class="admin-form-group">
+                                        <label for="company_ifsc">IFSC Code*</label>
+                                        <input type="text" id="company_ifsc" name="company_ifsc" class="admin-form-control" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bill-section">
                             <h3 class="section-title">Client Information</h3>
                             
                             <div class="admin-form-row">
@@ -124,7 +188,7 @@
                                     <input type="text" id="bill_to" name="bill_to" class="admin-form-control" required>
                                 </div>
                                 <div class="admin-form-group">
-                                    <label for="company_pan">Company PAN</label>
+                                    <label for="company_pan">Client PAN</label>
                                     <input type="text" id="company_pan" name="company_pan" class="admin-form-control">
                                 </div>
                             </div>
@@ -173,7 +237,7 @@
                                     </thead>
                                     <tbody id="billItems">
                                         <tr>
-                                            <td><input type="number" class="admin-form-control item-sr-no" value="1" min="1"></td>
+                                            <td><input type="number" class="admin-form-control item-sr-no" value="1" min="1" readonly></td>
                                             <td><input type="text" class="admin-form-control item-hsn-code" placeholder="-"></td>
                                             <td><input type="text" class="admin-form-control item-description" required placeholder="Item description"></td>
                                             <td><input type="text" class="admin-form-control item-qty" placeholder="-"></td>
