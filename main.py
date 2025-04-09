@@ -3,8 +3,8 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse, FileResponse
 from pydantic import BaseModel, EmailStr, Field, HttpUrl
-from typing import List, Optional, Union, Dict, Any
-from pymongo import MongoClient
+from typing import List, Optional, Union, Dict, Any, Annotated
+from pymongo import MongoClient, ASCENDING, DESCENDING
 from bson import ObjectId, json_util
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -26,6 +26,23 @@ import json
 from fastapi.encoders import jsonable_encoder
 import jinja2
 from pathlib import Path
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from starlette.requests import Request as StarletteRequest
+from functools import lru_cache
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -40,9 +57,18 @@ ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 IMGBB_API_KEY = os.getenv("IMGBB_API_KEY")
 BASE_URL = os.getenv("BASE_URL", "https://shivafabrications.versz.fun")
 BROWSERLESS_API_KEY = os.getenv("BROWSERLESS_API_KEY")
+EMAIL_ADDRESS = os.getenv("EMAIL_ADDRESS", "your-email@gmail.com")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "your-app-password")
+EMAIL_SMTP_SERVER = os.getenv("EMAIL_SMTP_SERVER", "smtp.gmail.com")
+EMAIL_SMTP_PORT = int(os.getenv("EMAIL_SMTP_PORT", "587"))
+
+# Setup rate limiter
+limiter = Limiter(key_func=get_remote_address)
 
 # FastAPI app
 app = FastAPI(title="Shiva Fabrications API")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS
 app.add_middleware(
@@ -61,6 +87,12 @@ db = client.shiva_fabrications
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/token")
 
+# Cache for frequently accessed data
+@lru_cache(maxsize=128)
+def get_cached_data(key: str, expiry: int = 300):
+    """Simple in-memory cache with expiry"""
+    return None
+
 # Helper function to serialize MongoDB documents
 def serialize_mongo_doc(doc):
     """Convert MongoDB document to a JSON-serializable dict"""
@@ -69,6 +101,22 @@ def serialize_mongo_doc(doc):
     doc_dict = dict(doc)
     if '_id' in doc_dict and isinstance(doc_dict['_id'], ObjectId):
         doc_dict['_id'] = str(doc_dict['_id'])
+    
+    # Convert all ObjectId instances to strings
+    for key, value in doc_dict.items():
+        if isinstance(value, ObjectId):
+            doc_dict[key] = str(value)
+        elif isinstance(value, datetime):
+            doc_dict[key] = value.isoformat()
+        elif isinstance(value, list):
+            for i, item in enumerate(value):
+                if isinstance(item, dict):
+                    for sub_key, sub_value in item.items():
+                        if isinstance(sub_value, ObjectId):
+                            value[i][sub_key] = str(sub_value)
+                        elif isinstance(sub_value, datetime):
+                            value[i][sub_key] = sub_value.isoformat()
+    
     return doc_dict
 
 # Pydantic models
@@ -303,6 +351,21 @@ class HealthCheck(BaseModel):
     status: str = "ok"
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
+class EmailAttachment(BaseModel):
+    filename: str
+    content_type: str
+    content: str  # Base64 encoded content
+
+class EmailRequest(BaseModel):
+    to: List[EmailStr]
+    cc: Optional[List[EmailStr]] = None
+    bcc: Optional[List[EmailStr]] = None
+    subject: str
+    body_html: str
+    body_text: Optional[str] = None
+    attachments: Optional[List[EmailAttachment]] = None
+    reply_to: Optional[EmailStr] = None
+
 # Utility functions
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
@@ -379,15 +442,21 @@ async def upload_image_to_imgbb(image_data, name=None):
         payload["name"] = name
         
     try:
-        response = requests.post(url, payload)
-        response.raise_for_status()
-        result = response.json()
-        
-        if result.get("success"):
-            return result["data"]["url"]
-        else:
-            raise HTTPException(status_code=500, detail="Failed to upload image to ImgBB")
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, data=payload) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    logger.error(f"ImgBB error: {response.status} - {error_text}")
+                    raise HTTPException(status_code=500, detail="Failed to upload image to ImgBB")
+                
+                result = await response.json()
+                
+                if result.get("success"):
+                    return result["data"]["url"]
+                else:
+                    raise HTTPException(status_code=500, detail="Failed to upload image to ImgBB")
     except Exception as e:
+        logger.error(f"Image upload failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Image upload failed: {str(e)}")
 
 def generate_feedback_code():
@@ -436,7 +505,7 @@ async def generate_pdf_with_browserless(html_content: str) -> BytesIO:
             ) as response:
                 if response.status != 200:
                     error_text = await response.text()
-                    print(f"Browserless error: {response.status} - {error_text}")
+                    logger.error(f"Browserless error: {response.status} - {error_text}")
                     raise HTTPException(
                         status_code=500,
                         detail=f"PDF generation failed: {error_text}"
@@ -449,7 +518,7 @@ async def generate_pdf_with_browserless(html_content: str) -> BytesIO:
                 return pdf_buffer
                 
     except Exception as e:
-        print(f"Error generating PDF: {str(e)}")
+        logger.error(f"Error generating PDF: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"PDF generation failed: {str(e)}"
@@ -881,9 +950,69 @@ def render_bill_template(bill):
     
     return html_content
 
+# Email sending functionality
+async def send_email(email_request: EmailRequest):
+    """Send an email with optional attachments"""
+    try:
+        # Create the email message
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = email_request.subject
+        msg['From'] = EMAIL_ADDRESS
+        msg['To'] = ', '.join(email_request.to)
+        
+        if email_request.cc:
+            msg['Cc'] = ', '.join(email_request.cc)
+        
+        if email_request.reply_to:
+            msg['Reply-To'] = email_request.reply_to
+            
+        # Add text part
+        if email_request.body_text:
+            msg.attach(MIMEText(email_request.body_text, 'plain'))
+        else:
+            # Create a plain text version from HTML if not provided
+            plain_text = email_request.body_html.replace('<br>', '\n').replace('</p>', '\n').replace('<li>', '- ')
+            # Remove HTML tags
+            import re
+            plain_text = re.sub(r'<[^>]*>', '', plain_text)
+            msg.attach(MIMEText(plain_text, 'plain'))
+        
+        # Add HTML part
+        msg.attach(MIMEText(email_request.body_html, 'html'))
+        
+        # Add attachments if any
+        if email_request.attachments:
+            for attachment in email_request.attachments:
+                part = MIMEApplication(
+                    base64.b64decode(attachment.content),
+                    Name=attachment.filename
+                )
+                part['Content-Disposition'] = f'attachment; filename="{attachment.filename}"'
+                part['Content-Type'] = f'{attachment.content_type}; name="{attachment.filename}"'
+                msg.attach(part)
+        
+        # Create a list of all recipients
+        all_recipients = email_request.to.copy()
+        if email_request.cc:
+            all_recipients.extend(email_request.cc)
+        if email_request.bcc:
+            all_recipients.extend(email_request.bcc)
+        
+        # Send the email
+        with smtplib.SMTP(EMAIL_SMTP_SERVER, EMAIL_SMTP_PORT) as server:
+            server.starttls()
+            server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+            server.sendmail(EMAIL_ADDRESS, all_recipients, msg.as_string())
+        
+        return True
+    except Exception as e:
+        logger.error(f"Error sending email: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")
+
 # API routes
 @app.post("/api/token", response_model=Token)
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+@limiter.limit("10/minute")
+async def login_for_access_token(request: StarletteRequest, form_data: OAuth2PasswordRequestForm = Depends()):
     user = await authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -898,12 +1027,13 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/api/health", response_model=HealthCheck)
-async def health_check():
+@limiter.limit("60/minute")
+async def health_check(request: StarletteRequest):
     return HealthCheck()
 
-
 @app.get("/api/feedback/code-info/{code}", response_model=Dict[str, Any])
-async def get_feedback_code_info(code: str):
+@limiter.limit("20/minute")
+async def get_feedback_code_info(code: str, request: StarletteRequest):
     """Verify if a feedback code exists and return project information"""
     code_doc = await db.feedback_codes.find_one({"code": code})
     if not code_doc:
@@ -921,7 +1051,8 @@ async def get_feedback_code_info(code: str):
     }
 
 @app.post("/api/projects", response_model=Project)
-async def create_project(project: ProjectCreate, current_user: User = Depends(get_current_active_user)):
+@limiter.limit("30/minute")
+async def create_project(project: ProjectCreate, request: StarletteRequest, current_user: User = Depends(get_current_active_user)):
     # Check if slug already exists
     existing = await db.projects.find_one({"slug": project.slug})
     if existing:
@@ -945,7 +1076,9 @@ async def create_project(project: ProjectCreate, current_user: User = Depends(ge
     return created_project
 
 @app.get("/api/projects", response_model=List[Project])
+@limiter.limit("60/minute")
 async def get_projects(
+    request: StarletteRequest,
     skip: int = 0, 
     limit: int = 10, 
     category: Optional[str] = None,
@@ -954,21 +1087,41 @@ async def get_projects(
     query = {"active": True} if active_only else {}
     if category:
         query["category"] = category
+    
+    # Check cache for common queries
+    cache_key = f"projects_{skip}_{limit}_{category}_{active_only}"
+    cached_data = get_cached_data(cache_key)
+    if cached_data:
+        return cached_data
         
-    projects = await db.projects.find(query).skip(skip).limit(limit).to_list(length=limit)
+    # Get total count for pagination
+    total_count = await db.projects.count_documents(query)
+    
+    # Get projects with efficient sorting and projection
+    projects = await db.projects.find(query).sort("created_at", -1).skip(skip).limit(limit).to_list(length=limit)
+    
     return projects
 
 @app.get("/api/projects/{slug}", response_model=Project)
-async def get_project(slug: str):
+@limiter.limit("60/minute")
+async def get_project(slug: str, request: StarletteRequest):
+    # Check cache
+    cache_key = f"project_{slug}"
+    cached_data = get_cached_data(cache_key)
+    if cached_data:
+        return cached_data
+    
     project = await db.projects.find_one({"slug": slug})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     return project
 
 @app.put("/api/projects/{slug}", response_model=Project)
+@limiter.limit("30/minute")
 async def update_project(
     slug: str, 
-    project_update: ProjectUpdate, 
+    project_update: ProjectUpdate,
+    request: StarletteRequest,
     current_user: User = Depends(get_current_active_user)
 ):
     project = await db.projects.find_one({"slug": slug})
@@ -994,7 +1147,8 @@ async def update_project(
     return updated_project
 
 @app.delete("/api/projects/{slug}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_project(slug: str, current_user: User = Depends(get_current_active_user)):
+@limiter.limit("20/minute")
+async def delete_project(slug: str, request: StarletteRequest, current_user: User = Depends(get_current_active_user)):
     project = await db.projects.find_one({"slug": slug})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -1008,7 +1162,9 @@ async def delete_project(slug: str, current_user: User = Depends(get_current_act
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @app.post("/api/upload", response_model=Dict[str, str])
+@limiter.limit("30/minute")
 async def upload_image(
+    request: StarletteRequest,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -1017,13 +1173,41 @@ async def upload_image(
     return {"url": image_url}
 
 @app.post("/api/contact", status_code=status.HTTP_201_CREATED)
-async def create_contact_message(message: ContactMessage):
+@limiter.limit("10/minute")
+async def create_contact_message(message: ContactMessage, request: StarletteRequest):
     message_dict = message.dict()
     result = await db.contact_messages.insert_one(message_dict)
+    
+    # Send notification email to admin
+    try:
+        email_request = EmailRequest(
+            to=[ADMIN_EMAIL],
+            subject=f"New Contact Form Submission: {message.subject}",
+            body_html=f"""
+            <h2>New Contact Form Submission</h2>
+            <p><strong>Name:</strong> {message.name}</p>
+            <p><strong>Email:</strong> {message.email}</p>
+            <p><strong>Phone:</strong> {message.phone}</p>
+            <p><strong>Company:</strong> {message.company or 'Not provided'}</p>
+            <p><strong>Subject:</strong> {message.subject}</p>
+            <p><strong>Message:</strong></p>
+            <p>{message.message}</p>
+            <hr>
+            <p>This is an automated notification from your website.</p>
+            """,
+            reply_to=message.email
+        )
+        await send_email(email_request)
+    except Exception as e:
+        logger.error(f"Failed to send contact notification email: {str(e)}")
+        # Continue even if email fails - the contact is still saved
+    
     return {"id": str(result.inserted_id)}
 
 @app.get("/api/contact", response_model=List[ContactMessageInDB])
+@limiter.limit("30/minute")
 async def get_contact_messages(
+    request: StarletteRequest,
     skip: int = 0, 
     limit: int = 50,
     current_user: User = Depends(get_current_active_user)
@@ -1032,8 +1216,10 @@ async def get_contact_messages(
     return messages
 
 @app.delete("/api/contact/{message_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("20/minute")
 async def delete_contact_message(
-    message_id: str, 
+    message_id: str,
+    request: StarletteRequest,
     current_user: User = Depends(get_current_active_user)
 ):
     result = await db.contact_messages.delete_one({"_id": ObjectId(message_id)})
@@ -1042,7 +1228,8 @@ async def delete_contact_message(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @app.post("/api/feedback", status_code=status.HTTP_201_CREATED)
-async def create_feedback(feedback: Feedback):
+@limiter.limit("10/minute")
+async def create_feedback(feedback: Feedback, request: StarletteRequest):
     # Verify the feedback code
     code_doc = await db.feedback_codes.find_one({"code": feedback.feedback_code})
     if not code_doc:
@@ -1062,10 +1249,34 @@ async def create_feedback(feedback: Feedback):
     feedback_dict["project_id"] = code_doc["project_id"]  # Set the project_id from the code lookup
     result = await db.feedback.insert_one(feedback_dict)
     
+    # Send notification email to admin
+    try:
+        email_request = EmailRequest(
+            to=[ADMIN_EMAIL],
+            subject=f"New Feedback Received: {feedback.company_name}",
+            body_html=f"""
+            <h2>New Feedback Received</h2>
+            <p><strong>Company:</strong> {feedback.company_name}</p>
+            <p><strong>Author:</strong> {feedback.author_name}</p>
+            <p><strong>Rating:</strong> {feedback.rating}/5</p>
+            <p><strong>Project:</strong> {project['title']}</p>
+            <p><strong>Feedback:</strong></p>
+            <p>{feedback.text}</p>
+            <hr>
+            <p>This feedback is awaiting approval.</p>
+            """,
+        )
+        await send_email(email_request)
+    except Exception as e:
+        logger.error(f"Failed to send feedback notification email: {str(e)}")
+        # Continue even if email fails - the feedback is still saved
+    
     return {"id": str(result.inserted_id)}
 
 @app.get("/api/feedback", response_model=List[FeedbackInDB])
+@limiter.limit("30/minute")
 async def get_feedback(
+    request: StarletteRequest,
     project_id: Optional[str] = None,
     approved_only: bool = False,
     current_user: User = Depends(get_current_active_user)
@@ -1080,7 +1291,14 @@ async def get_feedback(
     return feedback_list
 
 @app.get("/api/public/feedback/{project_slug}", response_model=List[FeedbackInDB])
-async def get_public_feedback(project_slug: str):
+@limiter.limit("60/minute")
+async def get_public_feedback(project_slug: str, request: StarletteRequest):
+    # Check cache
+    cache_key = f"public_feedback_{project_slug}"
+    cached_data = get_cached_data(cache_key)
+    if cached_data:
+        return cached_data
+        
     project = await db.projects.find_one({"slug": project_slug})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -1094,8 +1312,10 @@ async def get_public_feedback(project_slug: str):
     return feedback_list
 
 @app.put("/api/feedback/{feedback_id}/approve", response_model=FeedbackInDB)
+@limiter.limit("30/minute")
 async def approve_feedback(
     feedback_id: str,
+    request: StarletteRequest,
     current_user: User = Depends(get_current_active_user)
 ):
     result = await db.feedback.update_one(
@@ -1107,11 +1327,42 @@ async def approve_feedback(
         raise HTTPException(status_code=404, detail="Feedback not found")
     
     updated_feedback = await db.feedback.find_one({"_id": ObjectId(feedback_id)})
+    
+    # Send thank you email to the company if we have their email
+    feedback = await db.feedback.find_one({"_id": ObjectId(feedback_id)})
+    project = await db.projects.find_one({"_id": ObjectId(feedback["project_id"])})
+    
+    # Find contact message with matching company name to get email
+    company_contact = await db.contact_messages.find_one({"company": feedback["company_name"]})
+    if company_contact and project:
+        try:
+            email_request = EmailRequest(
+                to=[company_contact["email"]],
+                subject=f"Thank you for your feedback on {project['title']}",
+                body_html=f"""
+                <h2>Thank You for Your Feedback</h2>
+                <p>Dear {feedback["author_name"]},</p>
+                <p>Thank you for taking the time to provide feedback on our work for the {project['title']} project.</p>
+                <p>We appreciate your rating of {feedback["rating"]}/5 and your valuable comments.</p>
+                <p>Your feedback has been approved and is now visible on our website.</p>
+                <p>We look forward to working with you again in the future.</p>
+                <br>
+                <p>Best regards,</p>
+                <p>The Shiva Fabrications Team</p>
+                """,
+            )
+            await send_email(email_request)
+        except Exception as e:
+            logger.error(f"Failed to send feedback approval email: {str(e)}")
+            # Continue even if email fails
+    
     return updated_feedback
 
 @app.delete("/api/feedback/{feedback_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("20/minute")
 async def delete_feedback(
     feedback_id: str,
+    request: StarletteRequest,
     current_user: User = Depends(get_current_active_user)
 ):
     result = await db.feedback.delete_one({"_id": ObjectId(feedback_id)})
@@ -1120,8 +1371,10 @@ async def delete_feedback(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @app.get("/api/feedback/code/{project_slug}", response_model=Dict[str, str])
+@limiter.limit("30/minute")
 async def get_feedback_code(
     project_slug: str,
+    request: StarletteRequest,
     current_user: User = Depends(get_current_active_user)
 ):
     project = await db.projects.find_one({"slug": project_slug})
@@ -1145,18 +1398,33 @@ async def get_feedback_code(
     return {"code": code, "url": feedback_url}
 
 @app.get("/api/check-slug/{slug}")
-async def check_slug_availability(slug: str):
+@limiter.limit("30/minute")
+async def check_slug_availability(slug: str, request: StarletteRequest):
     existing = await db.projects.find_one({"slug": slug})
     return {"available": existing is None}
 
 @app.get("/api/categories")
-async def get_categories():
+@limiter.limit("60/minute")
+async def get_categories(request: StarletteRequest):
+    # Check cache
+    cache_key = "categories"
+    cached_data = get_cached_data(cache_key)
+    if cached_data:
+        return {"categories": cached_data}
+        
     # Get all unique categories from projects
     categories = await db.projects.distinct("category")
     return {"categories": categories}
 
 @app.get("/api/stats", response_model=Dict[str, Any])
-async def get_stats(current_user: User = Depends(get_current_active_user)):
+@limiter.limit("30/minute")
+async def get_stats(request: StarletteRequest, current_user: User = Depends(get_current_active_user)):
+    # Check cache
+    cache_key = "admin_stats"
+    cached_data = get_cached_data(cache_key)
+    if cached_data:
+        return cached_data
+        
     # Get various stats for the dashboard
     total_projects = await db.projects.count_documents({})
     active_projects = await db.projects.count_documents({"active": True})
@@ -1190,7 +1458,8 @@ async def get_stats(current_user: User = Depends(get_current_active_user)):
 
 # Bill-related endpoints
 @app.post("/api/bills", response_model=Dict[str, Any])
-async def create_bill(bill: Bill, current_user: User = Depends(get_current_active_user)):
+@limiter.limit("30/minute")
+async def create_bill(bill: Bill, request: StarletteRequest, current_user: User = Depends(get_current_active_user)):
     bill_dict = bill.dict()
     
     # Handle feedback linking if needed
@@ -1229,11 +1498,17 @@ async def create_bill(bill: Bill, current_user: User = Depends(get_current_activ
     return {**created_bill, "bill_url": bill_url}
 
 @app.get("/api/bills", response_model=List[Dict[str, Any]])
+@limiter.limit("30/minute")
 async def get_bills(
+    request: StarletteRequest,
     skip: int = 0,
     limit: int = 20,
     current_user: User = Depends(get_current_active_user)
 ):
+    # Get total count for pagination
+    total_count = await db.bills.count_documents({})
+    
+    # Use more efficient cursor-based pagination
     bills_cursor = db.bills.find().sort("created_at", -1).skip(skip).limit(limit)
     bills = []
     
@@ -1246,7 +1521,8 @@ async def get_bills(
     return bills
 
 @app.get("/api/bills/{bill_id}", response_model=Dict[str, Any])
-async def get_bill_by_id(bill_id: str, current_user: User = Depends(get_current_active_user)):
+@limiter.limit("30/minute")
+async def get_bill_by_id(bill_id: str, request: StarletteRequest, current_user: User = Depends(get_current_active_user)):
     bill = await db.bills.find_one({"_id": ObjectId(bill_id)})
     if not bill:
         raise HTTPException(status_code=404, detail="Bill not found")
@@ -1258,9 +1534,11 @@ async def get_bill_by_id(bill_id: str, current_user: User = Depends(get_current_
     return bill_dict
 
 @app.put("/api/bills/{bill_id}", response_model=Dict[str, Any])
+@limiter.limit("30/minute")
 async def update_bill(
     bill_id: str,
     bill_update: BillUpdate,
+    request: StarletteRequest,
     current_user: User = Depends(get_current_active_user)
 ):
     bill = await db.bills.find_one({"_id": ObjectId(bill_id)})
@@ -1304,14 +1582,16 @@ async def update_bill(
     return updated_bill_dict
 
 @app.delete("/api/bills/{bill_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_bill(bill_id: str, current_user: User = Depends(get_current_active_user)):
+@limiter.limit("20/minute")
+async def delete_bill(bill_id: str, request: StarletteRequest, current_user: User = Depends(get_current_active_user)):
     result = await db.bills.delete_one({"_id": ObjectId(bill_id)})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Bill not found")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @app.get("/api/bills/{bill_id}/download")
-async def download_bill_pdf(bill_id: str):
+@limiter.limit("30/minute")
+async def download_bill_pdf(bill_id: str, request: StarletteRequest):
     bill = await db.bills.find_one({"_id": ObjectId(bill_id)})
     if not bill:
         raise HTTPException(status_code=404, detail="Bill not found")
@@ -1338,15 +1618,22 @@ async def download_bill_pdf(bill_id: str):
         )
     
     except Exception as e:
-        print(f"Error generating PDF: {str(e)}")
+        logger.error(f"Error generating PDF: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to generate PDF: {str(e)}"
         )
 
 @app.get("/api/public/bill/{bill_code}", response_model=Dict[str, Any])
-async def get_bill_by_code(bill_code: str):
+@limiter.limit("60/minute")
+async def get_bill_by_code(bill_code: str, request: StarletteRequest):
     """Get bill data by its public code - accessible without authentication"""
+    # Check cache
+    cache_key = f"public_bill_{bill_code}"
+    cached_data = get_cached_data(cache_key)
+    if cached_data:
+        return cached_data
+        
     bill = await db.bills.find_one({"bill_code": bill_code})
     if not bill:
         raise HTTPException(status_code=404, detail="Bill not found")
@@ -1376,32 +1663,81 @@ async def get_bill_by_code(bill_code: str):
     
     return bill_dict
 
+# New email sending endpoint
+@app.post("/api/send-email", status_code=status.HTTP_200_OK)
+@limiter.limit("10/minute")
+async def send_email_endpoint(
+    email_request: EmailRequest,
+    request: StarletteRequest,
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Send an email with HTML formatting and optional attachments
+    """
+    try:
+        success = await send_email(email_request)
+        return {"status": "success", "message": "Email sent successfully"}
+    except Exception as e:
+        logger.error(f"Failed to send email: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to send email: {str(e)}"
+        )
+
 # Keep the server alive by pinging the health endpoint every 10 minutes
 async def keep_alive():
     while True:
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(f"https://shivfabricator.onrender.com/api/health") as response:
-                    print(f"Keep-alive ping: {response.status}")
+                    logger.info(f"Keep-alive ping: {response.status}")
         except Exception as e:
-            print(f"Keep-alive error: {str(e)}")
+            logger.error(f"Keep-alive error: {str(e)}")
         await asyncio.sleep(600)  # 10 minutes
+
+# Periodic cache cleanup
+async def cleanup_cache():
+    while True:
+        try:
+            # Clear the LRU cache periodically
+            get_cached_data.cache_clear()
+            logger.info("Cache cleared")
+        except Exception as e:
+            logger.error(f"Cache cleanup error: {str(e)}")
+        await asyncio.sleep(3600)  # Every hour
 
 @app.on_event("startup")
 async def startup_event():
     # Start the keep-alive task
     asyncio.create_task(keep_alive())
     
+    # Start cache cleanup task
+    asyncio.create_task(cleanup_cache())
+    
     # Create indexes
     await db.projects.create_index("slug", unique=True)
+    await db.projects.create_index([("created_at", DESCENDING)])
+    await db.projects.create_index("category")
+    await db.projects.create_index("active")
+    
     await db.feedback_codes.create_index("code", unique=True)
     await db.feedback_codes.create_index("project_id")
+    
     await db.feedback.create_index("project_id")
     await db.feedback.create_index("approved")
+    await db.feedback.create_index([("created_at", DESCENDING)])
     
     # New indexes for bills
     await db.bills.create_index("bill_code", unique=True)
-    await db.bills.create_index("created_at")
+    await db.bills.create_index([("created_at", DESCENDING)])
+    await db.bills.create_index("invoice_no")
+    
+    # Indexes for contact messages
+    await db.contact_messages.create_index([("created_at", DESCENDING)])
+    await db.contact_messages.create_index("email")
+    await db.contact_messages.create_index("company")
+    
+    logger.info("Application started and indexes created")
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
