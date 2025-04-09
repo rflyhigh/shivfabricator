@@ -2527,6 +2527,60 @@ img {
     font-size: 0.9rem;
 }
 
+        /* Complete Mobile Sidebar Fix */
+@media (max-width: 991.98px) {
+    /* Reset all previous styles that might be causing issues */
+    .nav-links {
+        position: fixed;
+        top: 0;
+        right: -280px;
+        width: 280px;
+        height: 100vh;
+        background-color: #0a0a0a;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 60px 0 0 0 !important;
+        margin: 0;
+        z-index: 1000;
+        overflow-y: auto;
+    }
+    
+    /* Remove all spacing from list items */
+    .nav-links li {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100%;
+        display: block;
+        height: auto !important;
+    }
+    
+    /* Set links to have minimal spacing */
+    .nav-links a {
+        display: block;
+        width: 100%;
+        padding: 8px 0 !important;
+        margin: 0 !important;
+        font-size: 1rem;
+        text-align: center;
+        line-height: 1 !important;
+    }
+    
+    /* Override any other styles that might be adding space */
+    .nav-links li::before,
+    .nav-links li::after,
+    .nav-links a::before,
+    .nav-links a::after {
+        display: none !important;
+    }
+    
+    /* Fix for any possible flex issues */
+    .nav-links, .nav-links li, .nav-links a {
+        box-sizing: border-box !important;
+    }
+}
+
 </style>
 </head>
 <body>
