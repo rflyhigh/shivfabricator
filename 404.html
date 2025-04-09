@@ -2535,42 +2535,34 @@ img {
         right: -280px;
         width: 280px;
         height: 100vh;
-        background-color: rgba(10, 10, 10, 0.95) !important;
+        background-color: rgba(10, 10, 10, 0.95);
         flex-direction: column;
-        align-items: center !important;
-        padding: 70px 0 30px !important;
+        align-items: center;
+        padding: 60px 0 30px !important;
         transition: all 0.3s ease;
         z-index: 1000;
         overflow-y: auto;
     }
     
-    /* Logo in sidebar */
-    .sidebar-logo {
-        position: absolute;
-        top: 15px;
-        left: 15px;
-    }
-    
-    .sidebar-logo img {
-        height: 30px;
-    }
-    
-    /* Navigation items */
+    /* Fix the excessive spacing between items */
     .nav-links li {
         margin: 0 !important;
-        width: 100%;
         padding: 0 !important;
-        border-bottom: none !important;
-        text-align: center;
+        width: 100%;
+        height: auto !important;
+        line-height: normal !important;
     }
     
+    /* Tighten up the link spacing */
     .nav-links a {
         display: block;
         width: 100%;
-        padding: 15px 0 !important;
+        padding: 10px 0 !important; /* Reduced padding */
+        margin: 0 !important; /* Remove any margins */
         font-size: 1rem;
         color: var(--text-secondary);
         text-align: center;
+        line-height: 1.2 !important; /* Control line height */
     }
     
     /* Active link styling */
@@ -2579,11 +2571,6 @@ img {
         border-bottom: 2px solid var(--primary-color);
         display: inline-block;
         width: auto;
-        padding-bottom: 5px !important;
-    }
-    
-    .nav-links a.active::after {
-        display: none;
     }
     
     /* Close button position */
@@ -2591,20 +2578,6 @@ img {
         position: absolute;
         top: 15px;
         right: 15px;
-        background: rgba(255, 255, 255, 0.1);
-        color: white;
-    }
-    
-    /* Theme toggle position */
-    .theme-toggle {
-        position: fixed;
-        top: 15px;
-        right: 70px;
-        left: auto;
-        width: 40px;
-        height: 40px;
-        font-size: 1rem;
-        z-index: 1001;
     }
 }
 </style>
