@@ -2702,7 +2702,7 @@ img {
             // Show toast notification
             showToast(
                 newTheme === 'light' ? 'Light Theme Activated' : 'Dark Theme Activated', 
-                You've switched to ${newTheme} mode., 
+                `You've switched to ${newTheme} mode.`, 
                 'info'
             );
         });
@@ -2783,12 +2783,12 @@ img {
             }
             
             try {
-                console.log('Fetching project:', ${API_URL}/projects/${slug});
-                const response = await fetch(${API_URL}/projects/${slug});
+                console.log('Fetching project:', `${API_URL}/projects/${slug}`);
+                const response = await fetch(`${API_URL}/projects/${slug}`);
                 console.log('Response status:', response.status);
                 
                 if (!response.ok) {
-                    throw new Error(HTTP error! Status: ${response.status});
+                    throw new Error(`HTTP error! Status: ${response.status}`);
                 }
                 
                 const project = await response.json();
@@ -2796,7 +2796,7 @@ img {
                 renderProject(project);
                 
                 // Update page title and meta
-                document.title = ${project.title} - Shiva Fabrications;
+                document.title = `${project.title} - Shiva Fabrications`;
                 
                 // Load feedback if available
                 if (project.enable_feedback) {
@@ -2809,8 +2809,6 @@ img {
                     loader.classList.add('hidden');
                     setTimeout(() => loader.remove(), 500);
                 }
-
-
 
                 // Setup image viewer for gallery items
                 setupImageViewer();
@@ -2846,7 +2844,7 @@ img {
                             <div class="project-gallery" id="projectGallery">
                                 ${project.images.map(img => `
                                     <div class="gallery-item" data-image="${img}">
-                                        <img src="{img}" alt="{project.title}">
+                                        <img src="${img}" alt="${project.title}">
                                     </div>
                                 `).join('')}
                             </div>
@@ -2854,7 +2852,7 @@ img {
                             <div class="project-scope">
                                 <h2>Scope of Work</h2>
                                 <ul>
-                                    ${project.scope_of_work.map(item => <li>${item}</li>).join('')}
+                                    ${project.scope_of_work.map(item => `<li>${item}</li>`).join('')}
                                 </ul>
                             </div>
                             
@@ -2871,7 +2869,7 @@ img {
                             <div class="project-results">
                                 <h2>Results & Benefits</h2>
                                 <ul>
-                                    ${project.results.map(item => <li>${item}</li>).join('')}
+                                    ${project.results.map(item => `<li>${item}</li>`).join('')}
                                 </ul>
                             </div>
                             
@@ -2965,8 +2963,8 @@ img {
         // Load feedback for a project
         async function loadFeedback(project) {
             try {
-                console.log('Fetching feedback:', ${API_URL}/public/feedback/${project.slug});
-                const response = await fetch(${API_URL}/public/feedback/${project.slug});
+                console.log('Fetching feedback:', `${API_URL}/public/feedback/${project.slug}`);
+                const response = await fetch(`${API_URL}/public/feedback/${project.slug}`);
                 console.log('Feedback response status:', response.status);
                 
                 if (!response.ok) {
@@ -3046,12 +3044,12 @@ img {
             }
             
             try {
-                console.log('Fetching bill:', ${API_URL}/public/bill/${code});
-                const response = await fetch(${API_URL}/public/bill/${code});
+                console.log('Fetching bill:', `${API_URL}/public/bill/${code}`);
+                const response = await fetch(`${API_URL}/public/bill/${code}`);
                 console.log('Response status:', response.status);
                 
                 if (!response.ok) {
-                    throw new Error(HTTP error! Status: ${response.status});
+                    throw new Error(`HTTP error! Status: ${response.status}`);
                 }
                 
                 const bill = await response.json();
@@ -3059,7 +3057,7 @@ img {
                 renderBill(bill);
                 
                 // Update page title
-                document.title = Invoice #${bill.invoice_no} - Shiva Fabrications;
+                document.title = `Invoice #${bill.invoice_no} - Shiva Fabrications`;
                 
                 // Hide loader
                 const loader = document.querySelector('.loader');
@@ -3085,7 +3083,7 @@ img {
                                 <p>${bill.company_address || "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015"}</p>
                                 <p>Contact: ${bill.company_contact || "8805954132 / 9096553951"}</p>
                                 <p>Email: ${bill.company_email || "shivfabricator1@gmail.com"}</p>
-                                ${bill.company_pan_number ? <p>PAN: ${bill.company_pan_number}</p> : ''}
+                                ${bill.company_pan_number ? `<p>PAN: ${bill.company_pan_number}</p>` : ''}
                             </div>
                             <div class="bill-title">
                                 <h1>INVOICE</h1>
@@ -3278,7 +3276,7 @@ img {
                                 <div class="form-header">
                                     <h2>Share Your Experience</h2>
                                     ${projectName ? `<p>Please tell us about your experience with our <strong>${projectName}</strong> service.</p>` : 
-                                       `<p>Please tell us about your experience working with Shiva Fabrications.</p>`}
+                                      `<p>Please tell us about your experience working with Shiva Fabrications.</p>`}
                                 </div>
                                 <form id="feedbackForm" class="feedback-form">
                                     <input type="hidden" id="feedbackCode" value="${code}">
@@ -3367,6 +3365,18 @@ img {
                     });
                 }
                 
+                function updateRatingText(rating) {
+                    const texts = [
+                        'Select a rating',
+                        'Poor',
+                        'Fair',
+                        'Good',
+                        'Very Good',
+                        'Excellent'
+                    ];
+                    ratingText.textContent = texts[rating] || texts[0];
+                }
+              
                 function updateRatingText(rating) {
                     const texts = [
                         'Select a rating',
