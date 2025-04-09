@@ -2526,60 +2526,7 @@ img {
     color: var(--text-secondary);
     font-size: 0.9rem;
 }
-/* Mobile Sidebar Fixes */
-@media (max-width: 991.98px) {
-    /* Navigation sidebar styling */
-    .nav-links {
-        position: fixed;
-        top: 0;
-        right: -280px;
-        width: 280px;
-        height: 100vh;
-        background-color: rgba(10, 10, 10, 0.95);
-        flex-direction: column;
-        align-items: center;
-        padding: 60px 0 30px !important;
-        transition: all 0.3s ease;
-        z-index: 1000;
-        overflow-y: auto;
-    }
-    
-    /* Fix the excessive spacing between items */
-    .nav-links li {
-        margin: 0 !important;
-        padding: 0 !important;
-        width: 100%;
-        height: auto !important;
-        line-height: normal !important;
-    }
-    
-    /* Tighten up the link spacing */
-    .nav-links a {
-        display: block;
-        width: 100%;
-        padding: 10px 0 !important; /* Reduced padding */
-        margin: 0 !important; /* Remove any margins */
-        font-size: 1rem;
-        color: var(--text-secondary);
-        text-align: center;
-        line-height: 1.2 !important; /* Control line height */
-    }
-    
-    /* Active link styling */
-    .nav-links a.active {
-        color: var(--text-primary);
-        border-bottom: 2px solid var(--primary-color);
-        display: inline-block;
-        width: auto;
-    }
-    
-    /* Close button position */
-    .mobile-nav-close {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-    }
-}
+
 </style>
 </head>
 <body>
