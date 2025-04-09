@@ -1098,6 +1098,7 @@ footer::before {
     height: 3px;
     background: var(--primary-color);
 }
+
 .spec-list li {
     margin-bottom: 15px;
     color: var(--text-secondary);
@@ -1928,6 +1929,7 @@ footer::before {
         width: 100%;
     }
 }
+
 /* Mobile Sidebar Fixes */
 @media (max-width: 991.98px) {
     /* Theme toggle position */
@@ -1961,7 +1963,7 @@ footer::before {
     .nav-links {
         position: fixed;
         top: 0;
-        right: -100%;
+        right: -280px;
         width: 280px;
         height: 100vh;
         background-color: var(--darker-bg);
@@ -2054,6 +2056,7 @@ footer::before {
         padding: 25px 20px;
     }
 }
+
 /* Toast notification for mobile */
 @media (max-width: 767.98px) {
     .toast {
@@ -2166,9 +2169,8 @@ footer::before {
         font-size: 0.9rem;
     }
 }
-        /* Comprehensive Mobile Layout Fixes */
 
-/* Fix for project header and content */
+/* Comprehensive Mobile Layout Fixes */
 @media (max-width: 991.98px) {
     /* Project header fixes */
     .project-header {
@@ -2260,22 +2262,21 @@ footer::before {
     .nav-links {
         position: fixed;
         top: 0;
-        left: -280px;
+        right: -280px;
         width: 280px;
         height: 100vh;
-        background-color: #121212;
+        background-color: var(--darker-bg);
         flex-direction: column;
         align-items: flex-start;
         padding: 100px 30px 30px;
         transition: all 0.3s ease;
         z-index: 1000;
         overflow-y: auto;
-        border-right: 1px solid rgba(255, 255, 255, 0.05);
+        border-right: none;
     }
     
     .nav-links.active {
-        left: 0;
-        right: auto;
+        right: 0;
     }
     
     /* Navigation items */
@@ -2332,7 +2333,6 @@ footer::before {
     .sidebar-logo img {
         height: 40px;
     }
-    
     
     /* Overlay */
     .mobile-nav-overlay {
@@ -2493,9 +2493,9 @@ img {
 }
 
 /* Animation for sidebar */
-@keyframes slideInLeft {
+@keyframes slideInRight {
     from {
-        transform: translateX(-100%);
+        transform: translateX(100%);
     }
     to {
         transform: translateX(0);
@@ -2503,126 +2503,30 @@ img {
 }
 
 .nav-links.active {
-    animation: slideInLeft 0.3s forwards;
+    animation: slideInRight 0.3s forwards;
 }
-/* Mobile Sidebar Fixes */
-@media (max-width: 991.98px) {
-    /* Theme toggle position */
-    .theme-toggle {
-        position: fixed;
-        top: 20px;
-        right: 80px;
-        left: auto;
-        width: 40px;
-        height: 40px;
-        font-size: 1rem;
-        z-index: 1001;
-    }
-    
-    /* Improved hamburger menu */
-    .hamburger {
-        display: block;
-        z-index: 1001;
-        cursor: pointer;
-        margin-right: 10px;
-    }
-    
-    .hamburger .line {
-        width: 25px;
-        height: 2px;
-        margin: 5px 0;
-        transition: var(--transition);
-    }
-    
-    /* Mobile nav sidebar - FIXED to open from right side */
-    .nav-links {
-        position: fixed;
-        top: 0;
-        right: -280px; /* Changed from left positioning to right */
-        width: 280px;
-        height: 100vh;
-        background-color: var(--darker-bg);
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 80px 25px 30px;
-        transition: all 0.4s ease;
-        box-shadow: -5px 0 30px rgba(0, 0, 0, 0.3);
-        z-index: 1000;
-        overflow-y: auto;
-    }
-    
-    [data-theme="light"] .nav-links {
-        background-color: var(--card-bg);
-        box-shadow: -5px 0 30px rgba(0, 0, 0, 0.1);
-    }
-    
-    .nav-links.active {
-        right: 0; /* Changed from left to right */
-    }
-    
-    .nav-links li {
-        margin: 15px 0;
-        width: 100%;
-    }
-    
-    .nav-links a {
-        display: block;
-        width: 100%;
-        padding: 10px 0;
-        font-size: 1.1rem;
-    }
-    
-    /* Improved close button */
-    .mobile-nav-close {
-        display: flex;
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        background: rgba(255, 255, 255, 0.1);
-        border: none;
-        color: var(--text-primary);
-        font-size: 1.2rem;
-        cursor: pointer;
-        width: 40px;
-        height: 40px;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        transition: var(--transition);
-    }
-    
-    .mobile-nav-close:hover {
-        background-color: var(--primary-color);
-        color: white;
-        transform: rotate(90deg);
-    }
-    
-    /* Overlay for mobile nav */
-    .mobile-nav-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.7);
-        z-index: 999;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease;
-        backdrop-filter: blur(2px);
-    }
-    
-    .mobile-nav-overlay.active {
-        opacity: 1;
-        visibility: visible;
-    }
-    
-    /* Prevent scrolling when menu is open */
-    body.no-scroll {
-        overflow: hidden;
-    }
+
+/* Feedback loading indicator fix */
+.feedback-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 0;
 }
-        
+
+.feedback-loading .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(0, 198, 255, 0.1);
+    border-top-color: var(--primary-color);
+    margin-bottom: 15px;
+}
+
+.feedback-loading p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
 </style>
 </head>
 <body>
@@ -2633,6 +2537,8 @@ img {
             <div class="loader-text">LOADING</div>
         </div>
     </div>
+
+
 
     <header>
         <div class="container">
@@ -2649,6 +2555,9 @@ img {
                     <li><a href="/projects.html">Projects</a></li>
                     <li><a href="/manpower.html">Manpower</a></li>
                     <li><a href="/contact.html">Contact</a></li>
+                    <button class="mobile-nav-close">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </ul>
                 <div class="hamburger">
                     <div class="line"></div>
@@ -2659,6 +2568,8 @@ img {
         </div>
     </header>
 
+
+
     <div id="dynamic-content">
         <!-- Content will be loaded dynamically here -->
         <div class="page-loading">
@@ -2666,6 +2577,8 @@ img {
             <p>Loading content...</p>
         </div>
     </div>
+
+
 
     <div id="error-content" style="display: none;">
         <section class="error-section">
@@ -2683,6 +2596,8 @@ img {
         </section>
     </div>
 
+
+
     <!-- Image Viewer Modal -->
     <div class="image-viewer-modal" id="imageViewerModal">
         <div class="image-viewer-content">
@@ -2692,6 +2607,8 @@ img {
             </button>
         </div>
     </div>
+
+
 
     <footer>
         <div class="container">
@@ -2740,9 +2657,13 @@ img {
         </div>
     </footer>
 
+
+
     <button class="scroll-to-top">
         <i class="fas fa-arrow-up"></i>
     </button>
+
+
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -2781,7 +2702,7 @@ img {
             // Show toast notification
             showToast(
                 newTheme === 'light' ? 'Light Theme Activated' : 'Dark Theme Activated', 
-                `You've switched to ${newTheme} mode.`, 
+                You've switched to ${newTheme} mode., 
                 'info'
             );
         });
@@ -2862,12 +2783,12 @@ img {
             }
             
             try {
-                console.log('Fetching project:', `${API_URL}/projects/${slug}`);
-                const response = await fetch(`${API_URL}/projects/${slug}`);
+                console.log('Fetching project:', ${API_URL}/projects/${slug});
+                const response = await fetch(${API_URL}/projects/${slug});
                 console.log('Response status:', response.status);
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                    throw new Error(HTTP error! Status: ${response.status});
                 }
                 
                 const project = await response.json();
@@ -2875,7 +2796,7 @@ img {
                 renderProject(project);
                 
                 // Update page title and meta
-                document.title = `${project.title} - Shiva Fabrications`;
+                document.title = ${project.title} - Shiva Fabrications;
                 
                 // Load feedback if available
                 if (project.enable_feedback) {
@@ -2888,6 +2809,8 @@ img {
                     loader.classList.add('hidden');
                     setTimeout(() => loader.remove(), 500);
                 }
+
+
 
                 // Setup image viewer for gallery items
                 setupImageViewer();
@@ -2923,7 +2846,7 @@ img {
                             <div class="project-gallery" id="projectGallery">
                                 ${project.images.map(img => `
                                     <div class="gallery-item" data-image="${img}">
-                                        <img src="${img}" alt="${project.title}">
+                                        <img src="{img}" alt="{project.title}">
                                     </div>
                                 `).join('')}
                             </div>
@@ -2931,7 +2854,7 @@ img {
                             <div class="project-scope">
                                 <h2>Scope of Work</h2>
                                 <ul>
-                                    ${project.scope_of_work.map(item => `<li>${item}</li>`).join('')}
+                                    ${project.scope_of_work.map(item => <li>${item}</li>).join('')}
                                 </ul>
                             </div>
                             
@@ -2948,7 +2871,7 @@ img {
                             <div class="project-results">
                                 <h2>Results & Benefits</h2>
                                 <ul>
-                                    ${project.results.map(item => `<li>${item}</li>`).join('')}
+                                    ${project.results.map(item => <li>${item}</li>).join('')}
                                 </ul>
                             </div>
                             
@@ -3042,8 +2965,8 @@ img {
         // Load feedback for a project
         async function loadFeedback(project) {
             try {
-                console.log('Fetching feedback:', `${API_URL}/public/feedback/${project.slug}`);
-                const response = await fetch(`${API_URL}/public/feedback/${project.slug}`);
+                console.log('Fetching feedback:', ${API_URL}/public/feedback/${project.slug});
+                const response = await fetch(${API_URL}/public/feedback/${project.slug});
                 console.log('Feedback response status:', response.status);
                 
                 if (!response.ok) {
@@ -3056,9 +2979,12 @@ img {
                 
                 if (feedbackContainer) {
                     // Remove loading indicator
-                    feedbackContainer.querySelector('.feedback-loading').remove();
+                    const loadingElement = feedbackContainer.querySelector('.feedback-loading');
+                    if (loadingElement) {
+                        loadingElement.remove();
+                    }
                     
-                    if (feedback.length === 0) {
+                    if (!feedback || feedback.length === 0) {
                         // No feedback yet
                         feedbackContainer.innerHTML += `
                             <div class="no-feedback">
@@ -3094,7 +3020,10 @@ img {
                 const feedbackContainer = document.getElementById('projectFeedback');
                 if (feedbackContainer) {
                     // Remove loading indicator
-                    feedbackContainer.querySelector('.feedback-loading').remove();
+                    const loadingElement = feedbackContainer.querySelector('.feedback-loading');
+                    if (loadingElement) {
+                        loadingElement.remove();
+                    }
                     
                     // Show error message
                     feedbackContainer.innerHTML += `
@@ -3117,12 +3046,12 @@ img {
             }
             
             try {
-                console.log('Fetching bill:', `${API_URL}/public/bill/${code}`);
-                const response = await fetch(`${API_URL}/public/bill/${code}`);
+                console.log('Fetching bill:', ${API_URL}/public/bill/${code});
+                const response = await fetch(${API_URL}/public/bill/${code});
                 console.log('Response status:', response.status);
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                    throw new Error(HTTP error! Status: ${response.status});
                 }
                 
                 const bill = await response.json();
@@ -3130,7 +3059,7 @@ img {
                 renderBill(bill);
                 
                 // Update page title
-                document.title = `Invoice #${bill.invoice_no} - Shiva Fabrications`;
+                document.title = Invoice #${bill.invoice_no} - Shiva Fabrications;
                 
                 // Hide loader
                 const loader = document.querySelector('.loader');
@@ -3156,7 +3085,7 @@ img {
                                 <p>${bill.company_address || "Survey No.76, Bharat Mata Nagar, Dighi, Pune -411015"}</p>
                                 <p>Contact: ${bill.company_contact || "8805954132 / 9096553951"}</p>
                                 <p>Email: ${bill.company_email || "shivfabricator1@gmail.com"}</p>
-                                ${bill.company_pan_number ? `<p>PAN: ${bill.company_pan_number}</p>` : ''}
+                                ${bill.company_pan_number ? <p>PAN: ${bill.company_pan_number}</p> : ''}
                             </div>
                             <div class="bill-title">
                                 <h1>INVOICE</h1>
@@ -3335,8 +3264,6 @@ img {
                     serviceType = projectData.service_type || '';
                 }
                 
-
-                
                 dynamicContent.innerHTML = `
                     <section class="page-header">
                         <div class="container">
@@ -3457,6 +3384,13 @@ img {
                 feedbackForm.addEventListener('submit', async function(e) {
                     e.preventDefault();
                     
+                    // Validate form
+                    const rating = document.getElementById('rating').value;
+                    if (!rating) {
+                        showToast('Error', 'Please select a rating', 'error');
+                        return;
+                    }
+                    
                     const submitBtn = feedbackForm.querySelector('button[type="submit"]');
                     const originalText = submitBtn.textContent;
                     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
@@ -3497,7 +3431,7 @@ img {
                         console.error('Error submitting feedback:', error);
                         submitBtn.innerHTML = originalText;
                         submitBtn.disabled = false;
-                        alert('There was an error submitting your feedback. Please try again.');
+                        showToast('Error', 'There was an error submitting your feedback. Please try again.', 'error');
                     }
                 });
                 
@@ -3546,9 +3480,16 @@ img {
         
         // Toast notification function
         function showToast(title, message, type = 'info') {
+            // Remove existing toasts
+            const existingToasts = document.querySelectorAll('.toast');
+            existingToasts.forEach(toast => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            });
+            
             // Create toast element
             const toast = document.createElement('div');
-            toast.className = 'toast';
+            toast.className = `toast ${type}`;
             
             // Set icon based on type
             let icon = 'info-circle';
@@ -3619,19 +3560,9 @@ img {
         // Handle mobile menu toggle
         const hamburger = document.querySelector('.hamburger');
         const navLinks = document.querySelector('.nav-links');
+        const mobileNavClose = document.querySelector('.mobile-nav-close');
         
         if (hamburger) {
-            // Add close button to mobile nav
-            const closeBtn = document.createElement('button');
-            closeBtn.className = 'mobile-nav-close';
-            closeBtn.innerHTML = '<i class="fas fa-times"></i>';
-            closeBtn.setAttribute('aria-label', 'Close menu');
-            
-            // Only add the close button if it doesn't already exist
-            if (!navLinks.querySelector('.mobile-nav-close')) {
-                navLinks.insertBefore(closeBtn, navLinks.firstChild);
-            }
-            
             hamburger.addEventListener('click', () => {
                 hamburger.classList.toggle('active');
                 navLinks.classList.toggle('active');
@@ -3643,17 +3574,27 @@ img {
                     overlay.className = 'mobile-nav-overlay';
                     document.body.appendChild(overlay);
                     
+                    // Make overlay visible
+                    setTimeout(() => {
+                        overlay.classList.add('active');
+                    }, 10);
+                    
                     // Close menu when clicking on overlay
                     overlay.addEventListener('click', closeMobileMenu);
                 } else {
                     // Remove overlay when closing
                     const overlay = document.querySelector('.mobile-nav-overlay');
-                    if (overlay) overlay.remove();
+                    if (overlay) {
+                        overlay.classList.remove('active');
+                        setTimeout(() => overlay.remove(), 300);
+                    }
                 }
             });
             
             // Close button functionality
-            closeBtn.addEventListener('click', closeMobileMenu);
+            if (mobileNavClose) {
+                mobileNavClose.addEventListener('click', closeMobileMenu);
+            }
         }
         
         // Close mobile nav when clicking on a nav link
@@ -3670,11 +3611,22 @@ img {
             
             if (hamburger && hamburger.classList.contains('active')) {
                 hamburger.classList.remove('active');
+            }
+            
+            if (navLinks && navLinks.classList.contains('active')) {
                 navLinks.classList.remove('active');
-                document.body.classList.remove('no-scroll');
-                
-                // Remove overlay
-                if (overlay) overlay.remove();
+            }
+            
+            document.body.classList.remove('no-scroll');
+            
+            // Remove overlay with animation
+            if (overlay) {
+                overlay.classList.remove('active');
+                setTimeout(() => {
+                    if (overlay.parentNode) {
+                        overlay.parentNode.removeChild(overlay);
+                    }
+                }, 300);
             }
         }
         
@@ -3699,9 +3651,6 @@ img {
         // Start the page initialization
         initializePage();
     });
-</script>
-
-    
+    </script>
 </body>
 </html>
-                                
