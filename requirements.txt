@@ -13,3 +13,4 @@ aiohttp==3.8.4
 PyPDF2
 xhtml2pdf
 jinja2
+slowapi
